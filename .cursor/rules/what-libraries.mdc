@@ -1,0 +1,13 @@
+---
+description: 
+globs: *.elm
+alwaysApply: false
+---
+## What libraries to use:
+
+Prefer to use `Json.Decode.Pipeline` in most cases for JSON objects (API resource types)
+
+Prefer to use `Accessibility` (from `tesk9/accessible-html`) over `Html` when possible.
+
+Use `elm-form` for all forms that need client-side validation
+

@@ -1,0 +1,31 @@
+{
+  "name": "store-pattern",
+  "type": "module",
+  "license": "MIT",
+  "postinstall": "patch-package",
+  "devDependencies": {
+    "@mswjs/data": "^0.16.2",
+    "@tailwindcss/postcss": "^4.1.5",
+    "@vitest/ui": "^3.1.4",
+    "elm-land": "^0.20.1",
+    "elm-review": "^2.13.2",
+    "msw": "^2.8.4",
+    "patch-package": "^8.0.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "@github/relative-time-element": "^4.4.6",
+    "chrono-node": "^2.8.0",
+    "jose": "^6.0.11"
+  },
+  "msw": {
+    "workerDirectory": [
+      "static"
+    ]
+  }
+}

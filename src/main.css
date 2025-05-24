@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@source "../.elm-land/**/*.{js,elm,ts,css,html}";
+@source "../src/**/*.{js,elm,ts,css,html}";
+
+@layer base {
+  :root {
+    color: var(--color-gray-800);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    &:has(dialog[open]) {
+      overflow: hidden;
+    }
+    scrollbar-gutter: stable;
+  }
+}
+
+@layer reset {
+  :where(button, input, a:link, select, textarea) {
+    transition: outline-color 0.1s ease-in-out, outline-offset 0.1s ease-in-out;
+    outline-color: transparent;
+    outline-width: 2px;
+    outline-style: solid;
+    &:focus-visible {
+      outline-offset: 1px;
+      outline-color: var(--color-gray-800);
+    }
+  }
+  :where(a:link:not([aria-current="page"])) {
+    text-decoration: underline;
+  }
+}

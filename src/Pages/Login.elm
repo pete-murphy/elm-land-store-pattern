@@ -1,0 +1,258 @@
+module Pages.Login exposing (Model, Msg, page)
+
+import Accessibility.Aria as Aria
+import Api.Auth exposing (LoginRequest)
+import ApiData
+import Components.Icon as Icon
+import Dict exposing (Dict)
+import Effect exposing (Effect)
+import Form
+import Form.Field as Field
+import Form.FieldView as FieldView
+import Form.Validation as Validation
+import Html
+import Html.Attributes as Attributes
+import Http.Extra
+import Page exposing (Page)
+import Result.Extra exposing (error)
+import Route exposing (Route)
+import Shared
+import Shared.Model
+import Shared.Msg
+import View exposing (View)
+
+
+page : Shared.Model -> Route () -> Page Model Msg
+page shared _ =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = Result.Extra.unwrap (\_ -> View.none) (\ok -> view ok) shared
+        }
+
+
+
+-- INIT
+
+
+type alias Model =
+    { formModel : Form.Model
+    , errors : Dict String (List String)
+    }
+
+
+init : () -> ( Model, Effect Msg )
+init () =
+    ( { formModel = Form.init
+      , errors = Dict.empty
+      }
+    , Effect.sendMsg NoOp
+    )
+
+
+
+-- UPDATE
+
+
+type Msg
+    = FormMsg (Form.Msg Msg)
+    | SharedMsg Shared.Msg
+    | UserSubmittedInvalidLogin (Dict String (List String))
+    | NoOp
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        FormMsg formMsg ->
+            let
+                ( updatedFormModel, cmd ) =
+                    Form.update formMsg model.formModel
+            in
+            ( { model | formModel = updatedFormModel }
+            , Effect.sendCmd cmd
+            )
+
+        SharedMsg sharedMsg ->
+            ( model
+            , Effect.sendSharedMsg sharedMsg
+            )
+
+        UserSubmittedInvalidLogin errors ->
+            ( { model | errors = errors }
+            , Effect.none
+            )
+
+        NoOp ->
+            ( model
+            , Effect.none
+            )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
+
+
+
+-- VIEW
+
+
+view : Shared.Model.OkModel -> Model -> View Msg
+view shared model =
+    { title = "Login"
+    , body =
+        [ Html.div
+            [ Attributes.class "grid place-items-center bg-gray-100 h-dvh" ]
+            [ Html.main_ [ Attributes.class "p-8 w-full max-w-md bg-white rounded-xl shadow-lg outline-2 outline-gray-200/50" ]
+                [ Html.h1
+                    [ Attributes.class "mb-4 text-2xl font-bold" ]
+                    [ Html.text "Login" ]
+                , case ( Dict.isEmpty model.errors, ApiData.value shared.credentials ) of
+                    ( _, ApiData.Failure err ) ->
+                        Html.output
+                            [ Attributes.class "block p-4 mb-4 bg-red-50 rounded-xl border-2 border-red-500 border-solid" ]
+                            [ Html.h2 [ Attributes.class "text-lg font-bold" ] [ Html.text "There is a problem" ]
+                            , Html.text (Http.Extra.detailedErrorToString err)
+                            ]
+
+                    ( False, _ ) ->
+                        Html.output
+                            [ Attributes.class "block p-4 mb-4 bg-red-50 rounded-xl border-2 border-red-500 border-solid" ]
+                            [ Html.h2 [ Attributes.class "text-lg font-bold" ] [ Html.text "There is a problem" ]
+                            , Html.ul
+                                [ Attributes.class "list-disc list-inside text-red-700" ]
+                                (Dict.toList model.errors
+                                    |> List.map
+                                        (\( key, errors ) ->
+                                            case errors of
+                                                [] ->
+                                                    Html.text ""
+
+                                                error :: _ ->
+                                                    Html.li
+                                                        [ Attributes.class "text-sm" ]
+                                                        [ Html.a
+                                                            [ Attributes.href ("#" ++ key)
+                                                            , Attributes.target "_self"
+                                                            ]
+                                                            [ Html.text (key ++ ": " ++ error) ]
+                                                        ]
+                                        )
+                                )
+                            ]
+
+                    _ ->
+                        Html.text ""
+                , loginForm model.errors
+                    |> Form.renderHtml
+                        { submitting = ApiData.isLoading shared.credentials
+                        , state = model.formModel
+                        , toMsg = FormMsg
+                        }
+                        (Form.options "form"
+                            |> Form.withOnSubmit
+                                (\{ parsed } ->
+                                    case parsed of
+                                        Form.Valid { username, password } ->
+                                            SharedMsg (Shared.Msg.UserSubmittedLogin { username = username, password = password })
+
+                                        Form.Invalid _ errors ->
+                                            UserSubmittedInvalidLogin errors
+                                )
+                        )
+                        [ Attributes.class "grid gap-4" ]
+                ]
+            ]
+        ]
+    }
+
+
+
+-- FORM
+
+
+loginForm : Dict String (List String) -> Form.HtmlForm String LoginRequest input msg
+loginForm errors =
+    (\username password ->
+        { combine =
+            Validation.succeed LoginRequest
+                |> Validation.andMap username
+                |> Validation.andMap password
+        , view =
+            \formContext ->
+                let
+                    fieldView id label field attrs =
+                        let
+                            errorForField =
+                                Dict.get id errors
+                                    |> Maybe.andThen List.head
+                        in
+                        Html.div [ Attributes.class "grid gap-1" ]
+                            [ Html.label
+                                [ Attributes.class "text-sm font-semibold"
+                                , Attributes.for id
+                                ]
+                                [ Html.text label ]
+                            , case errorForField of
+                                Just error ->
+                                    Html.div
+                                        [ Attributes.class "text-sm text-red-500" ]
+                                        [ Html.text error ]
+
+                                Nothing ->
+                                    Html.text ""
+                            , FieldView.input
+                                (Attributes.class "py-2 px-4 w-full rounded-lg border border-gray-800 well-focus"
+                                    :: Attributes.id id
+                                    :: attrs
+                                )
+                                field
+                            ]
+                in
+                [ fieldView "username"
+                    "Username"
+                    username
+                    [ Attributes.attribute "autocapitalize" "off"
+                    , Attributes.attribute "autocomplete" "username"
+                    , Attributes.attribute "autocorrect" "off"
+                    , Attributes.attribute "autofocus" "true"
+                    , Attributes.spellcheck False
+                    ]
+                , fieldView "password"
+                    "Password"
+                    password
+                    [ Attributes.attribute "autocomplete" "current-password"
+                    ]
+                , Html.button
+                    [ Attributes.type_ "submit"
+                    , Attributes.class "grid relative place-items-center py-2 px-4 mt-4 font-semibold text-white bg-gray-800 rounded-lg hover:bg-gray-900 aria-disabled:opacity-75 aria-disabled:cursor-not-allowed *:[grid-area:1/-1]"
+                    , Aria.disabled formContext.submitting
+                    ]
+                    [ Html.span [ Attributes.classList [ ( "invisible", formContext.submitting ) ] ]
+                        [ Html.text
+                            (if formContext.submitting then
+                                "Loading"
+
+                             else
+                                "Log in"
+                            )
+                        ]
+                    , if formContext.submitting then
+                        Icon.view []
+                            Icon.spinningThreeQuarterCircle
+
+                      else
+                        Html.text ""
+                    ]
+                ]
+        }
+    )
+        |> Form.form
+        |> Form.field "username" (Field.text |> Field.email |> Field.required "Required")
+        |> Form.field "password" (Field.text |> Field.password |> Field.required "Required")
