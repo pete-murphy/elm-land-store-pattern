@@ -3,7 +3,7 @@ import { setupWorker } from "msw/browser";
 import { handlers, db } from "./mocks";
 
 // Setup MSW worker for browser
-export const worker = setupWorker(...handlers);
+export const worker = setupWorker(...handlers());
 
 // Example usage and helper functions
 export class MockApiClient {

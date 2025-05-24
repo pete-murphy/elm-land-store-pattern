@@ -10,7 +10,7 @@ import {
 import { beforeAll, beforeEach, afterEach, afterAll } from "vitest";
 
 // Create MSW server with our handlers
-export const server = setupServer(...handlers);
+export const server = setupServer(...handlers());
 
 // Helper function to get the hash password format that the mock uses
 const mockHashPassword = (password: string): string => {
