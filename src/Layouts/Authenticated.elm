@@ -6,7 +6,9 @@ import Auth
 import Auth.AccessToken as AccessToken
 import Auth.Credentials as Credentials
 import Auth.User as User
+import Components.Button as Button
 import Components.Icon as Icon
+import Components.LocaleTime as LocaleTime
 import CustomElements
 import Effect exposing (Effect)
 import Html
@@ -15,6 +17,7 @@ import Html.Events as Events
 import Json.Decode as Decode
 import Jwt
 import Layout exposing (Layout)
+import Result.Extra
 import Route exposing (Route)
 import Route.Path
 import Shared
@@ -107,135 +110,120 @@ view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
         let
-            userCredentials =
-                props.user.credentials
-
             accessToken =
-                Credentials.accessToken userCredentials
+                Credentials.accessToken props.user.credentials
 
             infoFromUser =
-                Result.map2
-                    (\expiresAt issuedAt ->
-                        { expiresAt = expiresAt
-                        , issuedAt = issuedAt
-                        }
-                    )
-                    (AccessToken.expiresAt accessToken)
-                    (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
+                Ok Tuple.pair
+                    |> Result.Extra.andMap (AccessToken.expiresAt accessToken)
+                    |> Result.Extra.andMap (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
         in
-        [ Html.header [ Attributes.class "p-4 bg-gray-100 shadow-lg" ]
-            (Html.h1
-                [ Attributes.class "text-2xl font-bold" ]
-                [ Html.text content.title ]
-                :: (case infoFromUser of
-                        Ok info ->
-                            let
-                                expMillis =
-                                    Time.millisToPosix (info.expiresAt * 1000)
+        [ Html.div [ Attributes.class "grid grid-cols-[auto_1fr] min-h-dvh" ]
+            [ Html.aside [ Attributes.class "p-4 bg-gray-100 shadow-lg" ]
+                ((case infoFromUser of
+                    Ok ( expiresAt, issuedAt ) ->
+                        let
+                            expMillis =
+                                Time.millisToPosix (expiresAt * 1000)
 
-                                iatMillis =
-                                    Time.millisToPosix (info.issuedAt * 1000)
-                            in
-                            [ Html.div [ Attributes.class "flex gap-4 items-baseline" ]
-                                [ Html.p []
-                                    [ Html.text "Logged in as "
-                                    , Html.text (User.username (Credentials.user userCredentials))
-                                    , Html.text " ("
-                                    , Html.text (User.email (Credentials.user userCredentials))
-                                    , Html.text ")"
-                                    ]
-                                , let
-                                    loading =
-                                        ApiData.isLoading shared.logout
-                                  in
-                                  Html.button
-                                    [ Attributes.class "grid relative place-items-center py-1 px-2 text-sm font-semibold rounded-lg aria-disabled:opacity-75 aria-disabled:cursor-not-allowed *:[grid-area:1/-1] hover:bg-gray-800/5 active:bg-gray-800/10"
-                                    , Aria.disabled loading
-                                    , Events.onClick (toContentMsg UserClickedLogOut)
-                                    ]
-                                    [ Html.span [ Attributes.classList [ ( "invisible", loading ) ] ]
-                                        [ Html.text "Log out" ]
-                                    , if loading then
-                                        Icon.view [ Svg.Attributes.class "size-4" ]
-                                            Icon.spinningThreeQuarterCircle
+                            iatMillis =
+                                Time.millisToPosix (issuedAt * 1000)
 
-                                      else
-                                        Html.text ""
-                                    ]
-                                ]
-                            , Html.div [ Attributes.class "flex gap-4 items-baseline" ]
-                                [ Html.p []
-                                    [ Html.text "Token expires "
+                            user =
+                                Credentials.user props.user.credentials
+                        in
+                        [ Html.dl [ Attributes.class "text-sm grid gap-3 p-2" ]
+                            (let
+                                displayTime posix =
+                                    LocaleTime.new posix
+                                        |> LocaleTime.toHtml
+                                        |> Html.div [ Attributes.class "grid" ]
 
-                                    -- , CustomElements.localeAndRelativeTime
-                                    --     { posix = expMillis
-                                    --     , timeStyle = Just "long"
-                                    --     , dateStyle = Nothing
-                                    --     }
-                                    --     []
-                                    -- , Html.text ", issued "
-                                    -- , CustomElements.localeAndRelativeTime
-                                    --     { posix = iatMillis
-                                    --     , timeStyle = Just "long"
-                                    --     , dateStyle = Nothing
-                                    --     }
-                                    --     []
+                                defs =
+                                    [ ( "Logged in", Html.text (User.username user ++ " (" ++ User.email user ++ ")") )
+                                    , ( "Issued", displayTime iatMillis )
+                                    , ( "Expires", displayTime expMillis )
                                     ]
-                                , let
-                                    loading =
-                                        ApiData.isLoading shared.credentials
-                                  in
-                                  Html.button
-                                    [ Attributes.class "grid relative place-items-center py-1 px-2 text-sm font-semibold rounded-lg rid aria-disabled:opacity-75 aria-disabled:cursor-not-allowed *:[grid-area:1/-1] hover:bg-gray-800/5 active:bg-gray-800/10"
-                                    , Aria.disabled loading
-                                    , Events.onClick (toContentMsg UserClickedRenew)
-                                    ]
-                                    [ Html.span [ Attributes.classList [ ( "invisible", loading ) ] ]
-                                        [ Html.text "Renew" ]
-                                    , if loading then
-                                        Icon.view [ Svg.Attributes.class "size-4" ]
-                                            Icon.spinningThreeQuarterCircle
-
-                                      else
-                                        Html.text ""
-                                    ]
-                                ]
-                            ]
-
-                        Err err ->
-                            [ Html.div []
-                                [ Html.text "Error decoding JWT: "
-                                , Html.text (Jwt.errorToString err)
-                                ]
-                            ]
-                   )
-                ++ (let
-                        navLink path =
-                            Html.a
-                                (Attributes.class "font-semibold"
-                                    :: (if path == currentRoute.path then
-                                            [ Aria.currentPage ]
-
-                                        else
-                                            [ Route.Path.href path ]
-                                       )
-                                )
-                    in
-                    [ Html.nav []
-                        [ Html.ul [ Attributes.class "flex gap-4" ]
-                            ([ ( Route.Path.Home_, "Home" )
-                             ]
+                             in
+                             defs
                                 |> List.map
-                                    (\( path, text ) ->
-                                        Html.li []
-                                            [ navLink path [ Html.text text ]
+                                    (\( label, value ) ->
+                                        Html.div [ Attributes.class "grid" ]
+                                            [ Html.dd [ Attributes.class "text-sm font-semibold" ]
+                                                [ Html.text label ]
+                                            , Html.dt [ Attributes.class "max-w-prose line-clamp-1" ] [ value ]
                                             ]
                                     )
                             )
+                        , Button.new
+                            |> Button.withOnClick (toContentMsg UserClickedLogOut)
+                            |> Button.withSecondarySmallClass
+                            |> Button.withLoading (ApiData.isLoading shared.logout)
+                            |> Button.toHtml [ Html.text "Log out" ]
+                        , Html.div [ Attributes.class "flex gap-4 items-baseline" ]
+                            [ let
+                                loading =
+                                    ApiData.isLoading shared.credentials
+                              in
+                              Html.button
+                                [ Attributes.class "grid relative place-items-center py-1 px-2 text-sm font-semibold rounded-lg rid aria-disabled:opacity-75 aria-disabled:cursor-not-allowed *:[grid-area:1/-1] hover:bg-gray-800/5 active:bg-gray-800/10"
+                                , Aria.disabled loading
+                                , Events.onClick (toContentMsg UserClickedRenew)
+                                ]
+                                [ Html.span [ Attributes.classList [ ( "invisible", loading ) ] ]
+                                    [ Html.text "Renew" ]
+                                , if loading then
+                                    Icon.view [ Svg.Attributes.class "size-4" ]
+                                        Icon.spinningThreeQuarterCircle
+
+                                  else
+                                    Html.text ""
+                                ]
+                            ]
                         ]
+
+                    Err err ->
+                        [ Html.div []
+                            [ Html.text "Error decoding JWT: "
+                            , Html.text (Jwt.errorToString err)
+                            ]
+                        ]
+                 )
+                    ++ (let
+                            navLink path =
+                                Html.a
+                                    (Attributes.class "font-semibold"
+                                        :: (if path == currentRoute.path then
+                                                [ Aria.currentPage ]
+
+                                            else
+                                                [ Route.Path.href path ]
+                                           )
+                                    )
+                        in
+                        [ Html.nav []
+                            [ Html.ul [ Attributes.class "flex gap-4" ]
+                                ([ ( Route.Path.Home_, "Home" )
+                                 ]
+                                    |> List.map
+                                        (\( path, text ) ->
+                                            Html.li []
+                                                [ navLink path [ Html.text text ]
+                                                ]
+                                        )
+                                )
+                            ]
+                        ]
+                       )
+                )
+            , Html.div []
+                [ Html.header [ Attributes.class "p-4" ]
+                    [ Html.h1
+                        [ Attributes.class "text-2xl font-bold" ]
+                        [ Html.text content.title ]
                     ]
-                   )
-            )
-        , Html.main_ [ Attributes.class "p-4" ] content.body
+                , Html.main_ [ Attributes.class "p-4" ] content.body
+                ]
+            ]
         ]
     }

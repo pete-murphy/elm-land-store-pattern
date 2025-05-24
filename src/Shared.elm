@@ -142,10 +142,10 @@ updateOk route msg model =
 
         Shared.Msg.BackendRespondedToRenewToken result ->
             case result of
-                Ok token ->
+                Ok ok ->
                     ( { model
                         | credentials =
-                            ApiData.map (Credentials.updateWithRefreshResponse token) model.credentials
+                            ApiData.map (Credentials.updateTokens ok.accessToken ok.refreshToken) model.credentials
                                 |> ApiData.toNotLoading
                       }
                     , Effect.none

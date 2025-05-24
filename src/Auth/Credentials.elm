@@ -3,7 +3,7 @@ module Auth.Credentials exposing
     , create, user, accessToken, refreshToken
     , httpHeaders, isExpired, canRefresh
     , loginResponseDecoder
-    , updateWithRefreshResponse
+    , updateTokens
     )
 
 {-| Authentication credentials management.
@@ -34,7 +34,6 @@ type alias CredentialsData =
     { user : User
     , accessToken : AccessToken
     , refreshToken : RefreshToken
-    , expiresIn : Int -- seconds until access token expires
     }
 
 
@@ -42,9 +41,8 @@ type alias CredentialsData =
 -}
 type alias LoginResponse =
     { user : User
-    , accessToken : String
-    , refreshToken : String
-    , expiresIn : Int
+    , accessToken : AccessToken
+    , refreshToken : RefreshToken
     }
 
 
@@ -58,9 +56,8 @@ create : LoginResponse -> Credentials
 create response =
     Credentials
         { user = response.user
-        , accessToken = AccessToken.fromString response.accessToken
-        , refreshToken = RefreshToken.fromString response.refreshToken
-        , expiresIn = response.expiresIn
+        , accessToken = response.accessToken
+        , refreshToken = response.refreshToken
         }
 
 
@@ -70,24 +67,24 @@ loginResponseDecoder : Decoder LoginResponse
 loginResponseDecoder =
     Decode.succeed LoginResponse
         |> Pipeline.required "user" User.decoder
-        |> Pipeline.required "accessToken" Decode.string
-        |> Pipeline.required "refreshToken" Decode.string
-        |> Pipeline.required "expiresIn" Decode.int
+        |> Pipeline.required "accessToken" AccessToken.decoder
+        |> Pipeline.required "refreshToken" RefreshToken.decoder
 
 
 
 -- UPDATE
 
 
-updateWithRefreshResponse :
-    { accessToken : String, expiresIn : Int }
+updateTokens :
+    AccessToken
+    -> RefreshToken
     -> Credentials
     -> Credentials
-updateWithRefreshResponse refreshResponse (Credentials data) =
+updateTokens accessToken_ refreshToken_ (Credentials data) =
     Credentials
         { data
-            | accessToken = AccessToken.fromString refreshResponse.accessToken
-            , expiresIn = refreshResponse.expiresIn
+            | accessToken = accessToken_
+            , refreshToken = refreshToken_
         }
 
 

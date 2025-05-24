@@ -1,23 +1,24 @@
 module Api.Auth exposing
-    ( LoginRequest, RefreshRequest
+    ( LoginRequest
     , RefreshResponse
-    , login, refresh, logout, verify
+    , login, refresh, logout
     )
 
 {-| Authentication API endpoints.
 
-@docs LoginRequest, RefreshRequest
+@docs LoginRequest
 @docs RefreshResponse
-@docs login, refresh, logout, verify
+@docs login, refresh, logout
 
 -}
 
+import Auth.AccessToken as AccessToken exposing (AccessToken)
 import Auth.Credentials as Credentials exposing (Credentials, LoginResponse)
-import Auth.RefreshToken as RefreshToken
-import Auth.User as User exposing (User)
+import Auth.RefreshToken as RefreshToken exposing (RefreshToken)
 import Http
 import Http.Extra exposing (Request)
 import Json.Decode as Decode
+import Json.Decode.Pipeline as Pipeline
 import Json.Encode as Encode
 import Url.Builder
 
@@ -30,18 +31,11 @@ type alias LoginRequest =
     }
 
 
-{-| Refresh token request
--}
-type alias RefreshRequest =
-    { refreshToken : String
-    }
-
-
 {-| Token refresh response
 -}
 type alias RefreshResponse =
-    { accessToken : String
-    , expiresIn : Int
+    { accessToken : AccessToken
+    , refreshToken : RefreshToken
     }
 
 
@@ -111,24 +105,12 @@ logout credentials =
     }
 
 
-{-| Verify current access token
--}
-verify : Credentials -> Request User
-verify credentials =
-    { method = "GET"
-    , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "auth", "verify" ] []
-    , body = Http.emptyBody
-    , decoder = Decode.field "user" User.decoder
-    }
-
-
 
 -- DECODERS
 
 
 refreshResponseDecoder : Decode.Decoder RefreshResponse
 refreshResponseDecoder =
-    Decode.map2 RefreshResponse
-        (Decode.field "accessToken" Decode.string)
-        (Decode.field "expiresIn" Decode.int)
+    Decode.succeed RefreshResponse
+        |> Pipeline.required "accessToken" AccessToken.decoder
+        |> Pipeline.required "refreshToken" RefreshToken.decoder

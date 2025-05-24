@@ -90,7 +90,7 @@ toHtml (Settings settings) =
 
 defaultAttrs : List (Html.Attribute msg)
 defaultAttrs =
-    [ Attributes.class "p-6 my-auto mx-auto rounded-lg shadow-lg opacity-0 transform origin-center scale-95 translate-y-4 motion-safe:transition-all text-navy-10 tablet:p-4 open:translate-y-0 open:scale-100 motion-safe:backdrop:transition-all backdrop:backdrop-blur-none open:backdrop:backdrop-blur-sm open:backdrop:bg-navy-05/38 open:backdrop:starting:bg-navy-05/0 open:backdrop:starting:backdrop-blur-none backdrop:bg-navy-05/0 transition-discrete open:starting:opacity-0 open:starting:translate-y-4 open:starting:scale-95 open:opacity-100" ]
+    [ Attributes.class "p-6 my-auto mx-auto text-gray-800 rounded-lg shadow-lg opacity-0 transform origin-center scale-95 translate-y-4 motion-safe:transition-all tablet:p-4 open:translate-y-0 open:scale-100 motion-safe:backdrop:transition-all backdrop:backdrop-blur-none open:backdrop:backdrop-blur-sm open:backdrop:bg-gray-950/50 open:backdrop:starting:bg-gray-950/0 open:backdrop:starting:backdrop-blur-none backdrop:bg-gray-950/0 transition-discrete open:starting:opacity-0 open:starting:translate-y-4 open:starting:scale-95 open:opacity-100" ]
 
 
 defaultHeader : Html msg

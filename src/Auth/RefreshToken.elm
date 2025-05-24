@@ -1,6 +1,7 @@
 module Auth.RefreshToken exposing
     ( RefreshToken
-    , fromString, toString
+    , toString
+    , decoder
     )
 
 {-| Refresh Token handling - simple opaque identifier for token renewal.
@@ -10,6 +11,8 @@ module Auth.RefreshToken exposing
 
 -}
 
+import Json.Decode as Decode
+
 
 {-| Opaque type for refresh tokens - prevents accidental misuse
 -}
@@ -17,15 +20,11 @@ type RefreshToken
     = RefreshToken String
 
 
-
--- CONSTRUCTORS
-
-
 {-| Create a refresh token from a string (from API response)
 -}
-fromString : String -> RefreshToken
-fromString =
-    RefreshToken
+decoder : Decode.Decoder RefreshToken
+decoder =
+    Decode.map RefreshToken Decode.string
 
 
 {-| Extract the refresh token string (for API requests)

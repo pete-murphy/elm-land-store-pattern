@@ -1,3 +1,5 @@
+import "@github/relative-time-element";
+
 export function init() {
   customElements.define(
     "modal-dialog-controller",
@@ -88,10 +90,58 @@ export function init() {
     }
   );
 
-  function slugify(str: string) {
-    return str
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]/g, "")
-      .replace(/ /g, "-");
-  }
+  customElements.define(
+    "locale-datetime",
+    class extends HTMLElement {
+      dateTimeFormat: null | Intl.DateTimeFormat = null;
+      static get observedAttributes() {
+        return ["millis", "date-style", "time-style"];
+      }
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.render();
+      }
+
+      attributeChangedCallback(
+        name: string,
+        oldValue: string,
+        newValue: string
+      ) {
+        this.render();
+      }
+
+      render() {
+        const millis = +this.getAttribute("millis")!;
+        if (isNaN(millis)) {
+          console.error(
+            "locale-datetime: invalid millis",
+            this.getAttribute("millis")
+          );
+          return;
+        }
+        const date = new Date(millis);
+        const dateStyle = (this.getAttribute("date-style") ?? undefined) as
+          | Intl.DateTimeFormatOptions["dateStyle"]
+          | undefined;
+        const timeStyle = (this.getAttribute("time-style") ?? undefined) as
+          | Intl.DateTimeFormatOptions["timeStyle"]
+          | undefined;
+
+        this.innerText = new Intl.DateTimeFormat(undefined, {
+          dateStyle: dateStyle,
+          timeStyle: timeStyle,
+        }).format(date);
+      }
+    }
+  );
+}
+
+function slugify(str: string) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/ /g, "-");
 }

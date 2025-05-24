@@ -1,9 +1,8 @@
 module Pages.Login exposing (Model, Msg, page)
 
-import Accessibility.Aria as Aria
 import Api.Auth exposing (LoginRequest)
 import ApiData
-import Components.Icon as Icon
+import Components.Button as Button
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Form
@@ -229,27 +228,10 @@ loginForm errors =
                     password
                     [ Attributes.attribute "autocomplete" "current-password"
                     ]
-                , Html.button
-                    [ Attributes.type_ "submit"
-                    , Attributes.class "grid relative place-items-center py-2 px-4 mt-4 font-semibold text-white bg-gray-800 rounded-lg hover:bg-gray-900 aria-disabled:opacity-75 aria-disabled:cursor-not-allowed *:[grid-area:1/-1]"
-                    , Aria.disabled formContext.submitting
-                    ]
-                    [ Html.span [ Attributes.classList [ ( "invisible", formContext.submitting ) ] ]
-                        [ Html.text
-                            (if formContext.submitting then
-                                "Loading"
-
-                             else
-                                "Log in"
-                            )
-                        ]
-                    , if formContext.submitting then
-                        Icon.view []
-                            Icon.spinningThreeQuarterCircle
-
-                      else
-                        Html.text ""
-                    ]
+                , Button.new
+                    |> Button.withPrimaryClass
+                    |> Button.withLoading formContext.submitting
+                    |> Button.toHtml [ Html.text "Log in" ]
                 ]
         }
     )

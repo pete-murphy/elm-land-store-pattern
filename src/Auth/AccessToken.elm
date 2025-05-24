@@ -1,6 +1,6 @@
 module Auth.AccessToken exposing
     ( AccessToken
-    , fromString, toString
+    , toString, decoder
     , isExpired, expiresAt, decode
     , httpHeader
     )
@@ -8,7 +8,7 @@ module Auth.AccessToken exposing
 {-| JWT Access Token handling with expiration and decoding capabilities.
 
 @docs AccessToken
-@docs fromString, toString
+@docs toString, decoder
 @docs isExpired, expiresAt, decode
 @docs httpHeader
 
@@ -26,22 +26,16 @@ type AccessToken
     = AccessToken String
 
 
-
--- CONSTRUCTORS
-
-
-{-| Create an access token from a string (from API response)
--}
-fromString : String -> AccessToken
-fromString =
-    AccessToken
-
-
 {-| Extract the token string (for storage, debugging, etc.)
 -}
 toString : AccessToken -> String
 toString (AccessToken token) =
     token
+
+
+decoder : Decode.Decoder AccessToken
+decoder =
+    Decode.map AccessToken Decode.string
 
 
 
@@ -71,8 +65,8 @@ expiresAt (AccessToken token) =
 {-| Decode any field from a JWT token
 -}
 decode : Decode.Decoder a -> AccessToken -> Result Jwt.JwtError a
-decode decoder (AccessToken token) =
-    Jwt.decodeToken decoder token
+decode decoder_ (AccessToken token) =
+    Jwt.decodeToken decoder_ token
 
 
 
