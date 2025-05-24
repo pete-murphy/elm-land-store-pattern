@@ -1,7 +1,6 @@
 module Pages.Login exposing (Model, Msg, page)
 
 import Api.Auth exposing (LoginRequest)
-import ApiData
 import Components.Button as Button
 import Dict exposing (Dict)
 import Effect exposing (Effect)
@@ -12,6 +11,7 @@ import Form.Validation as Validation
 import Html
 import Html.Attributes as Attributes
 import Http.Extra
+import Loadable
 import Page exposing (Page)
 import Result.Extra
 import Route exposing (Route)
@@ -112,8 +112,8 @@ view shared model =
                 [ Html.h1
                     [ Attributes.class "mb-4 text-2xl font-bold" ]
                     [ Html.text "Login" ]
-                , case ( Dict.isEmpty model.errors, ApiData.value shared.credentials ) of
-                    ( _, ApiData.Failure err ) ->
+                , case ( Dict.isEmpty model.errors, Loadable.value shared.credentials ) of
+                    ( _, Loadable.Failure err ) ->
                         Html.output
                             [ Attributes.class "block p-4 mb-4 bg-red-50 rounded-xl border-2 border-red-500 border-solid" ]
                             [ Html.h2 [ Attributes.class "text-lg font-bold" ] [ Html.text "There is a problem" ]
@@ -150,7 +150,7 @@ view shared model =
                         Html.text ""
                 , loginForm model.errors
                     |> Form.renderHtml
-                        { submitting = ApiData.isLoading shared.credentials
+                        { submitting = Loadable.isLoading shared.credentials
                         , state = model.formModel
                         , toMsg = FormMsg
                         }

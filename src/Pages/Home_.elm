@@ -3,13 +3,13 @@ module Pages.Home_ exposing (Data, Model, Msg, page)
 import Api.Post as Post exposing (Post)
 import Api.Tag as Tag exposing (Tag)
 import Api.User as User exposing (User)
-import ApiData exposing (ApiData)
 import Auth
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Http.Extra
 import Layouts
+import Loadable exposing (Loadable)
 import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
@@ -38,7 +38,7 @@ toLayout user _ =
 
 
 type alias Data a =
-    ApiData Http.Extra.DetailedError a
+    Loadable Http.Extra.DetailedError a
 
 
 type alias Model =
@@ -50,9 +50,9 @@ type alias Model =
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
 init user _ _ =
-    ( { tags = ApiData.loading
-      , users = ApiData.loading
-      , posts = ApiData.loading
+    ( { tags = Loadable.loading
+      , users = Loadable.loading
+      , posts = Loadable.loading
       }
     , Effect.batch
         [ Effect.request (Tag.get user.credentials)
@@ -84,17 +84,17 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         BackendRespondedToGetTags result ->
-            ( { model | tags = ApiData.fromResult result }
+            ( { model | tags = Loadable.fromResult result }
             , Effect.none
             )
 
         BackendRespondedToGetUsers result ->
-            ( { model | users = ApiData.fromResult (result |> Result.map .data) }
+            ( { model | users = Loadable.fromResult (result |> Result.map .data) }
             , Effect.none
             )
 
         BackendRespondedToGetPosts result ->
-            ( { model | posts = ApiData.fromResult (result |> Result.map .data) }
+            ( { model | posts = Loadable.fromResult (result |> Result.map .data) }
             , Effect.none
             )
 
@@ -145,15 +145,15 @@ viewSection props =
     Html.section [ Attributes.class "flex flex-col gap-4" ]
         [ Html.h2 [ Attributes.class "text-xl font-bold" ]
             [ Html.text props.title ]
-        , case ApiData.value props.apiData of
-            ApiData.Empty ->
+        , case Loadable.value props.apiData of
+            Loadable.Empty ->
                 viewSkeletonSectionContent
 
-            ApiData.Failure error ->
+            Loadable.Failure error ->
                 -- TODO: Show error
                 Html.text (Debug.toString error)
 
-            ApiData.Success value ->
+            Loadable.Success value ->
                 props.view value
         ]
 

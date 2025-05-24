@@ -2,12 +2,12 @@ module Shared.Model exposing (Model, OkModel, store)
 
 {-| -}
 
-import ApiData exposing (ApiData)
 import Auth.Credentials exposing (Credentials)
 import Dict
 import Http.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Loadable exposing (Loadable)
 import Paginated exposing (Paginated)
 import Store exposing (Store)
 
@@ -34,7 +34,7 @@ type alias OkModel =
 
 
 type alias Data a =
-    ApiData Http.Extra.DetailedError a
+    Loadable Http.Extra.DetailedError a
 
 
 

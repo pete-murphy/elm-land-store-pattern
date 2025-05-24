@@ -1,9 +1,9 @@
 module Auth exposing (User, onPageLoad, viewCustomPage)
 
-import ApiData
 import Auth.Action
 import Auth.Credentials exposing (Credentials)
 import Auth.Route
+import Loadable
 import Route exposing (Route)
 import Shared
 import View exposing (View)
@@ -22,8 +22,8 @@ onPageLoad shared route =
             Auth.Action.loadCustomPage
 
         Ok okShared ->
-            case ( ApiData.value okShared.credentials, ApiData.isLoading okShared.credentials ) of
-                ( ApiData.Success credentials, _ ) ->
+            case ( Loadable.value okShared.credentials, Loadable.isLoading okShared.credentials ) of
+                ( Loadable.Success credentials, _ ) ->
                     -- User is logged in, proceed to load the page
                     Auth.Action.loadPageWithUser { credentials = credentials }
 

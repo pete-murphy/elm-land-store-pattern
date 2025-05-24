@@ -13,13 +13,13 @@ module Shared exposing
 -}
 
 import Api.Auth
-import ApiData
 import Auth.Credentials as Credentials exposing (Credentials)
 import Auth.Route
 import Dict
 import Effect exposing (Effect)
 import Json.Decode
 import Json.Decode.Pipeline
+import Loadable
 import Route exposing (Route)
 import Shared.Model
 import Shared.Msg
@@ -57,8 +57,8 @@ init flagsResult _ =
     case flagsResult of
         Ok flags ->
             ( Ok
-                { credentials = ApiData.fromMaybe flags.credentials
-                , logout = ApiData.notAsked
+                { credentials = Loadable.fromMaybe flags.credentials
+                , logout = Loadable.notAsked
                 , store =
                     { paginated = Dict.empty
                     , unpaginated = Dict.empty
@@ -107,7 +107,7 @@ updateOk route msg model =
             )
 
         Shared.Msg.UserSubmittedLogin loginRequest ->
-            ( { model | credentials = ApiData.loading }
+            ( { model | credentials = Loadable.loading }
             , Effect.login loginRequest
             )
 
@@ -115,13 +115,13 @@ updateOk route msg model =
             case result of
                 Ok loginResponse ->
                     ( { model
-                        | credentials = ApiData.succeed (Credentials.create loginResponse)
+                        | credentials = Loadable.succeed (Credentials.create loginResponse)
                       }
                     , Effect.pushRoutePath (Auth.Route.fromLogin route)
                     )
 
                 Err err ->
-                    ( { model | credentials = ApiData.fail err }
+                    ( { model | credentials = Loadable.fail err }
                     , Effect.none
                     )
 
@@ -129,14 +129,14 @@ updateOk route msg model =
             case result of
                 Ok () ->
                     ( { model
-                        | credentials = ApiData.notAsked
-                        , logout = ApiData.succeed ()
+                        | credentials = Loadable.notAsked
+                        , logout = Loadable.succeed ()
                       }
                     , Effect.pushRoutePath (Auth.Route.fromLogin route)
                     )
 
                 Err err ->
-                    ( { model | logout = ApiData.fail err }
+                    ( { model | logout = Loadable.fail err }
                     , Effect.none
                     )
 
@@ -145,21 +145,21 @@ updateOk route msg model =
                 Ok ok ->
                     ( { model
                         | credentials =
-                            ApiData.map (Credentials.updateTokens ok.accessToken ok.refreshToken) model.credentials
-                                |> ApiData.toNotLoading
+                            Loadable.map (Credentials.updateTokens ok.accessToken ok.refreshToken) model.credentials
+                                |> Loadable.toNotLoading
                       }
                     , Effect.none
                     )
 
                 Err err ->
-                    ( { model | credentials = ApiData.fail err }
+                    ( { model | credentials = Loadable.fail err }
                     , Effect.none
                     )
 
         Shared.Msg.UserClickedLogOut ->
-            ( { model | logout = ApiData.toLoading model.logout }
-            , case ApiData.value model.credentials of
-                ApiData.Success credentials ->
+            ( { model | logout = Loadable.toLoading model.logout }
+            , case Loadable.value model.credentials of
+                Loadable.Success credentials ->
                     Effect.requestNoContent (Api.Auth.logout credentials)
                         Shared.Msg.BackendRespondedToLogout
 
@@ -168,9 +168,9 @@ updateOk route msg model =
             )
 
         Shared.Msg.UserClickedRenewToken ->
-            ( { model | credentials = ApiData.toLoading model.credentials }
-            , case ApiData.value model.credentials of
-                ApiData.Success credentials ->
+            ( { model | credentials = Loadable.toLoading model.credentials }
+            , case Loadable.value model.credentials of
+                Loadable.Success credentials ->
                     Effect.request (Api.Auth.refresh credentials)
                         Shared.Msg.BackendRespondedToRenewToken
 

@@ -284,7 +284,7 @@ viewPreview (Post internals _) =
         [ Html.Attributes.class "" ]
         [ Html.header [ Html.Attributes.class "flex gap-4 justify-between items-start mb-3" ]
             [ Html.div [ Html.Attributes.class "flex-1" ]
-                [ Html.h3 [ Html.Attributes.class "mb-1 text-lg font-semibold text-gray-900" ]
+                [ Html.h3 [ Html.Attributes.class "mb-1 text-lg font-semibold" ]
                     [ Html.text internals.title ]
                 , Html.div [ Html.Attributes.class "flex gap-2 items-center text-sm text-gray-600" ]
                     [ Html.text ("by " ++ username internals.author)
@@ -303,10 +303,13 @@ viewPreview (Post internals _) =
 
               else
                 Tag.viewList internals.tags
-            , Html.div [ Html.Attributes.class "text-sm grid text-end" ]
+            , Html.div [ Html.Attributes.class "text-sm flex gap-1 text-end text-gray-500" ]
                 (LocaleTime.new internals.createdAt
                     |> LocaleTime.withTimeStyle Nothing
+                    |> LocaleTime.withLocaleAttrs []
+                    |> LocaleTime.withRelativeAttrs []
                     |> LocaleTime.toHtml
+                    |> List.intersperse (Html.text " • ")
                 )
             ]
         ]

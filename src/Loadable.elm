@@ -1,6 +1,5 @@
-module ApiData exposing
-    ( ApiData
-    , LoadingOrNot(..)
+module Loadable exposing
+    ( Loadable
     , Value(..)
     , andMap
     , andThen
@@ -17,7 +16,6 @@ module ApiData exposing
     , toMaybe
     , toMaybeError
     , toNotLoading
-    , toPair
     , toRemoteData
     , traverseDict
     , traverseList
@@ -30,8 +28,8 @@ import Dict
 import RemoteData exposing (RemoteData)
 
 
-type ApiData e a
-    = ApiData (Internals e a)
+type Loadable e a
+    = Loadable (Internals e a)
 
 
 type alias Internals e a =
@@ -46,36 +44,31 @@ type Value e a
     | Success a
 
 
-type LoadingOrNot
-    = Loading
-    | NotLoading
-
-
 
 -- CONSTRUCTORS
 
 
-notAsked : ApiData e a
+notAsked : Loadable e a
 notAsked =
-    ApiData { value = Empty, isLoading = False }
+    Loadable { value = Empty, isLoading = False }
 
 
-loading : ApiData e a
+loading : Loadable e a
 loading =
-    ApiData { value = Empty, isLoading = True }
+    Loadable { value = Empty, isLoading = True }
 
 
-succeed : a -> ApiData e a
+succeed : a -> Loadable e a
 succeed a =
-    ApiData { value = Success a, isLoading = False }
+    Loadable { value = Success a, isLoading = False }
 
 
-fail : e -> ApiData e a
+fail : e -> Loadable e a
 fail error =
-    ApiData { value = Failure error, isLoading = False }
+    Loadable { value = Failure error, isLoading = False }
 
 
-fromResult : Result e a -> ApiData e a
+fromResult : Result e a -> Loadable e a
 fromResult result =
     case result of
         Ok a ->
@@ -85,7 +78,7 @@ fromResult result =
             fail error
 
 
-fromMaybe : Maybe a -> ApiData e a
+fromMaybe : Maybe a -> Loadable e a
 fromMaybe maybe =
     case maybe of
         Just a ->
@@ -99,24 +92,24 @@ fromMaybe maybe =
 -- COMBINATORS
 
 
-mapLoading : (Bool -> Bool) -> ApiData e a -> ApiData e a
-mapLoading f (ApiData internals) =
-    ApiData { internals | isLoading = f internals.isLoading }
+mapLoading : (Bool -> Bool) -> Loadable e a -> Loadable e a
+mapLoading f (Loadable internals) =
+    Loadable { internals | isLoading = f internals.isLoading }
 
 
-toLoading : ApiData e a -> ApiData e a
+toLoading : Loadable e a -> Loadable e a
 toLoading =
     mapLoading (\_ -> True)
 
 
-toNotLoading : ApiData e a -> ApiData e a
+toNotLoading : Loadable e a -> Loadable e a
 toNotLoading =
     mapLoading (\_ -> False)
 
 
-map : (a -> b) -> ApiData e a -> ApiData e b
-map f (ApiData internals) =
-    ApiData
+map : (a -> b) -> Loadable e a -> Loadable e b
+map f (Loadable internals) =
+    Loadable
         (case internals.value of
             Empty ->
                 { value = Empty, isLoading = internals.isLoading }
@@ -129,17 +122,17 @@ map f (ApiData internals) =
         )
 
 
-traverseList : (a -> ApiData e b) -> List a -> ApiData e (List b)
+traverseList : (a -> Loadable e b) -> List a -> Loadable e (List b)
 traverseList f =
     List.foldl
-        (\a (ApiData acc) ->
+        (\a (Loadable acc) ->
             let
                 data =
                     f a
             in
             case ( value data, acc.value ) of
                 ( Success b, Success bs ) ->
-                    ApiData { value = Success (b :: bs), isLoading = acc.isLoading || isLoading data }
+                    Loadable { value = Success (b :: bs), isLoading = acc.isLoading || isLoading data }
 
                 ( Failure error, _ ) ->
                     fail error
@@ -148,12 +141,12 @@ traverseList f =
                     fail error
 
                 ( _, _ ) ->
-                    ApiData { value = Empty, isLoading = acc.isLoading || isLoading data }
+                    Loadable { value = Empty, isLoading = acc.isLoading || isLoading data }
         )
         (succeed [])
 
 
-traversePair : (a -> ApiData e b) -> ( k, a ) -> ApiData e ( k, b )
+traversePair : (a -> Loadable e b) -> ( k, a ) -> Loadable e ( k, b )
 traversePair f ( key, a ) =
     let
         data =
@@ -161,16 +154,16 @@ traversePair f ( key, a ) =
     in
     case data.value of
         Success b ->
-            ApiData { value = Success ( key, b ), isLoading = data.isLoading }
+            Loadable { value = Success ( key, b ), isLoading = data.isLoading }
 
         Failure error ->
-            ApiData { value = Failure error, isLoading = data.isLoading }
+            Loadable { value = Failure error, isLoading = data.isLoading }
 
         Empty ->
-            ApiData { value = Empty, isLoading = data.isLoading }
+            Loadable { value = Empty, isLoading = data.isLoading }
 
 
-traverseDict : (a -> ApiData e b) -> Dict.Dict comparable a -> ApiData e (Dict.Dict comparable b)
+traverseDict : (a -> Loadable e b) -> Dict.Dict comparable a -> Loadable e (Dict.Dict comparable b)
 traverseDict f dict =
     dict
         |> Dict.toList
@@ -178,7 +171,7 @@ traverseDict f dict =
         |> map Dict.fromList
 
 
-sequenceDict : Dict.Dict comparable (ApiData e b) -> ApiData e (Dict.Dict comparable b)
+sequenceDict : Dict.Dict comparable (Loadable e b) -> Loadable e (Dict.Dict comparable b)
 sequenceDict =
     traverseDict identity
 
@@ -188,24 +181,24 @@ sequenceDict =
     ExceptT e (MaybeT (Writer Any)) a
 
 -}
-andThen : (a -> ApiData e b) -> ApiData e a -> ApiData e b
-andThen f (ApiData data) =
+andThen : (a -> Loadable e b) -> Loadable e a -> Loadable e b
+andThen f (Loadable data) =
     case data.value of
         Success a ->
             let
                 next =
                     unwrap (f a)
             in
-            ApiData { value = next.value, isLoading = data.isLoading || next.isLoading }
+            Loadable { value = next.value, isLoading = data.isLoading || next.isLoading }
 
         Failure err ->
-            ApiData { value = Failure err, isLoading = data.isLoading }
+            Loadable { value = Failure err, isLoading = data.isLoading }
 
         Empty ->
-            ApiData { value = Empty, isLoading = data.isLoading }
+            Loadable { value = Empty, isLoading = data.isLoading }
 
 
-andMap : ApiData e a -> ApiData e (a -> b) -> ApiData e b
+andMap : Loadable e a -> Loadable e (a -> b) -> Loadable e b
 andMap ma mf =
     mf |> andThen (\f -> map f ma)
 
@@ -214,8 +207,8 @@ andMap ma mf =
 -- DESTRUCTORS
 
 
-withDefault : a -> ApiData e a -> a
-withDefault default (ApiData internals) =
+withDefault : a -> Loadable e a -> a
+withDefault default (Loadable internals) =
     case internals.value of
         Success a ->
             a
@@ -224,8 +217,8 @@ withDefault default (ApiData internals) =
             default
 
 
-toMaybe : ApiData e a -> Maybe a
-toMaybe (ApiData internals) =
+toMaybe : Loadable e a -> Maybe a
+toMaybe (Loadable internals) =
     case internals.value of
         Success a ->
             Just a
@@ -234,32 +227,23 @@ toMaybe (ApiData internals) =
             Nothing
 
 
-value : ApiData e a -> Value e a
-value (ApiData internals) =
+value : Loadable e a -> Value e a
+value (Loadable internals) =
     internals.value
 
 
-isLoading : ApiData e a -> Bool
-isLoading (ApiData internals) =
+isLoading : Loadable e a -> Bool
+isLoading (Loadable internals) =
     internals.isLoading
 
 
-unwrap : ApiData e a -> Internals e a
-unwrap (ApiData data) =
+unwrap : Loadable e a -> Internals e a
+unwrap (Loadable data) =
     data
 
 
-toPair : ApiData e a -> ( LoadingOrNot, Value e a )
-toPair (ApiData internals) =
-    if internals.isLoading then
-        ( Loading, internals.value )
-
-    else
-        ( NotLoading, internals.value )
-
-
-toMaybeError : ApiData e a -> Maybe e
-toMaybeError (ApiData internals) =
+toMaybeError : Loadable e a -> Maybe e
+toMaybeError (Loadable internals) =
     case internals.value of
         Failure error ->
             Just error
@@ -268,8 +252,8 @@ toMaybeError (ApiData internals) =
             Nothing
 
 
-toRemoteData : ApiData e a -> RemoteData e a
-toRemoteData (ApiData internals) =
+toRemoteData : Loadable e a -> RemoteData e a
+toRemoteData (Loadable internals) =
     case ( internals.value, internals.isLoading ) of
         ( _, True ) ->
             RemoteData.Loading

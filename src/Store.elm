@@ -1,11 +1,11 @@
 module Store exposing (..)
 
-import ApiData exposing (ApiData)
 import Dict exposing (Dict)
 import Http
 import Http.Extra
 import Json.Decode
 import Json.Encode as Encode
+import Loadable exposing (Loadable)
 import Paginated exposing (Paginated)
 import Result.Extra
 import Store.Request as Request exposing (Key, Request)
@@ -13,7 +13,7 @@ import Url.Builder
 
 
 type alias Store a =
-    Dict Key (ApiData Http.Extra.DetailedError a)
+    Dict Key (Loadable Http.Extra.DetailedError a)
 
 
 handleRequest :
@@ -28,14 +28,14 @@ handleRequest strategy request store =
 
         newStoreUpdate =
             Dict.update key
-                (Maybe.map ApiData.toLoading
-                    >> Maybe.withDefault ApiData.loading
+                (Maybe.map Loadable.toLoading
+                    >> Maybe.withDefault Loadable.loading
                     >> Just
                 )
                 store
 
         newStoreInsert =
-            Dict.insert key ApiData.loading store
+            Dict.insert key Loadable.loading store
 
         req : Http.Extra.Request Encode.Value
         req =
@@ -77,7 +77,7 @@ handleRequestPaginated strategy request store =
 
         lastFetched =
             Dict.get key store
-                |> Maybe.andThen ApiData.toMaybe
+                |> Maybe.andThen Loadable.toMaybe
                 |> Debug.log "lastFetched"
 
         maybePaginationParams =
@@ -108,8 +108,8 @@ handleRequestPaginated strategy request store =
                 newStore : Store (Paginated Encode.Value)
                 newStore =
                     Dict.update key
-                        (Maybe.map ApiData.toLoading
-                            >> Maybe.withDefault ApiData.loading
+                        (Maybe.map Loadable.toLoading
+                            >> Maybe.withDefault Loadable.loading
                             >> Just
                         )
                         store
@@ -138,7 +138,7 @@ handleResponse request response store =
         key =
             Request.key request
     in
-    Dict.insert key (ApiData.fromResult response) store
+    Dict.insert key (Loadable.fromResult response) store
 
 
 handleResponsePaginated :
@@ -156,14 +156,14 @@ handleResponsePaginated request response store =
             (\prev ->
                 let
                     prevData =
-                        ApiData.map .data prev
-                            |> ApiData.withDefault []
+                        Loadable.map .data prev
+                            |> Loadable.withDefault []
 
                     apiDataNextPage =
-                        ApiData.fromResult response
+                        Loadable.fromResult response
                 in
                 apiDataNextPage
-                    |> ApiData.map
+                    |> Loadable.map
                         (\nextPage ->
                             { nextPage
                                 | data =
@@ -176,7 +176,7 @@ handleResponsePaginated request response store =
                             }
                         )
             )
-            >> Maybe.withDefault ApiData.loading
+            >> Maybe.withDefault Loadable.loading
             >> Just
         )
         store
@@ -204,7 +204,7 @@ type PaginatedStrategy
 get :
     Request () a
     -> Store Encode.Value
-    -> ApiData Http.Extra.DetailedError a
+    -> Loadable Http.Extra.DetailedError a
 get request store =
     let
         key =
@@ -214,28 +214,28 @@ get request store =
             Dict.get key store
     in
     maybeData
-        |> Maybe.withDefault ApiData.notAsked
-        |> ApiData.andThen
+        |> Maybe.withDefault Loadable.notAsked
+        |> Loadable.andThen
             (Json.Decode.decodeValue (Request.decoder request)
                 >> Result.mapError Http.Extra.BadBody
-                >> ApiData.fromResult
+                >> Loadable.fromResult
             )
 
 
 getAll :
     Request Paginated.Config a
     -> Store (Paginated Encode.Value)
-    -> ApiData Http.Extra.DetailedError (List a)
+    -> Loadable Http.Extra.DetailedError (List a)
 getAll request store =
     let
         key =
             Request.key (Request.msg request)
     in
     Dict.get key store
-        |> Maybe.withDefault ApiData.notAsked
-        |> ApiData.andThen
+        |> Maybe.withDefault Loadable.notAsked
+        |> Loadable.andThen
             (.data
                 >> Result.Extra.combineMap (Json.Decode.decodeValue (Request.decoder request))
                 >> Result.mapError Http.Extra.BadBody
-                >> ApiData.fromResult
+                >> Loadable.fromResult
             )
