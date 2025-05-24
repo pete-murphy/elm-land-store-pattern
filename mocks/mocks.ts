@@ -314,7 +314,8 @@ export const handlers = (apiBase?: string) => {
     // Login
     http.post(`${API_BASE}/auth/login`, async ({ request }) => {
       const body = (await request.json()) as any;
-      const { usernameOrEmail, password } = body;
+      const { username, email, password } = body;
+      const usernameOrEmail = username || email;
 
       if (!password) {
         return HttpResponse.json(

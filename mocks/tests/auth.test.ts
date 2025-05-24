@@ -6,10 +6,16 @@ const API_BASE = "http://localhost/api"; // Assuming tests run against localhost
 
 // Helper to log in a user and get tokens
 async function loginUser(usernameOrEmail: string, password?: string) {
+  // Determine if the input is an email or username
+  const isEmail = usernameOrEmail.includes("@");
+  const loginData = isEmail
+    ? { email: usernameOrEmail, password: password || "test123" }
+    : { username: usernameOrEmail, password: password || "test123" };
+
   const loginResponse = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ usernameOrEmail, password: password || "test123" }),
+    body: JSON.stringify(loginData),
   });
   return loginResponse.json();
 }
@@ -31,7 +37,7 @@ describe("Authentication API", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usernameOrEmail: testUser.username,
+          username: testUser.username,
           password: "test123",
         }),
       });
@@ -47,7 +53,7 @@ describe("Authentication API", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usernameOrEmail: testUser.email,
+          email: testUser.email,
           password: "test123",
         }),
       });
@@ -61,7 +67,7 @@ describe("Authentication API", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usernameOrEmail: testUser.username,
+          username: testUser.username,
           password: "wrongpassword",
         }),
       });
@@ -73,7 +79,7 @@ describe("Authentication API", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usernameOrEmail: "nonexistentuser",
+          username: "nonexistentuser",
           password: "password",
         }),
       });
@@ -85,7 +91,7 @@ describe("Authentication API", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usernameOrEmail: inactiveUser.username,
+          username: inactiveUser.username,
           password: "inactive123",
         }),
       });

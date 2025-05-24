@@ -8,10 +8,16 @@ async function getAccessToken(
   username: string = "testuser",
   password: string = "test123"
 ) {
+  // Determine if the input is an email or username
+  const isEmail = username.includes("@");
+  const loginData = isEmail
+    ? { email: username, password }
+    : { username, password };
+
   const response = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ usernameOrEmail: username, password }),
+    body: JSON.stringify(loginData),
   });
   let data = {};
   try {
