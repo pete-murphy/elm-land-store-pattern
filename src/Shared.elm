@@ -160,7 +160,7 @@ updateOk route msg model =
             ( { model | logout = ApiData.toLoading model.logout }
             , case ApiData.value model.credentials of
                 ApiData.Success credentials ->
-                    Effect.request (Api.Auth.logout credentials)
+                    Effect.requestNoContent (Api.Auth.logout credentials)
                         Shared.Msg.BackendRespondedToLogout
 
                 _ ->

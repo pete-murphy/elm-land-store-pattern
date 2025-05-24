@@ -8,7 +8,7 @@ port module Effect exposing
     , loadExternalUrl, back
     , login, renewToken, logOut
     , sendStoreRequest, sendStoreRequestPaginated
-    , request
+    , request, requestNoContent
     , focusById
     , map, toCmd
     )
@@ -28,7 +28,7 @@ port module Effect exposing
 @docs login, renewToken, logOut
 
 @docs sendStoreRequest, sendStoreRequestPaginated
-@docs request
+@docs request, requestNoContent
 
 @docs focusById
 
@@ -213,6 +213,15 @@ request :
     -> Effect msg
 request req toMsg =
     Http.Extra.request req toMsg
+        |> sendCmd
+
+
+requestNoContent :
+    Http.Extra.Request ()
+    -> (Result Http.Extra.DetailedError () -> msg)
+    -> Effect msg
+requestNoContent req toMsg =
+    Http.Extra.requestNoContent req toMsg
         |> sendCmd
 
 

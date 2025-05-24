@@ -228,12 +228,12 @@ iconClass =
 
 primaryClass : Html.Attribute msg
 primaryClass =
-    Attributes.class "py-4 px-8 text-white bg-gray-800 rounded-lg hover:bg-gray-900 active:bg-gray-950"
+    Attributes.class "py-2 px-4 text-white bg-gray-800 rounded-lg hover:bg-gray-900 active:bg-gray-950"
 
 
 secondaryClass : Html.Attribute msg
 secondaryClass =
-    Attributes.class "py-4 px-8 text-gray-800 rounded-lg bg-gray-800/0 hover:bg-gray-800/5 active:bg-gray-800/10"
+    Attributes.class "py-2 px-4 text-gray-800 rounded-lg bg-gray-800/0 hover:bg-gray-800/5 active:bg-gray-800/10"
 
 
 primarySmallClass : Html.Attribute msg

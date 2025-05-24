@@ -101,7 +101,7 @@ logout credentials =
                   )
                 ]
             )
-    , decoder = Decode.map (\_ -> ()) (Decode.field "message" Decode.string)
+    , decoder = Decode.succeed ()
     }
 
 

@@ -7,6 +7,7 @@ module Http.Extra exposing
     , is401
     , jsonResolver
     , request
+    , requestNoContent
     )
 
 import Http
@@ -161,6 +162,19 @@ request req toMsg =
         , body = req.body
         , expect =
             expectJsonWithDetailedError toMsg req.decoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+requestNoContent : Request () -> (Result DetailedError () -> msg) -> Cmd msg
+requestNoContent req toMsg =
+    request_
+        { method = req.method
+        , headers = req.headers
+        , url = req.url
+        , body = req.body
+        , expect = Http.expectStringResponse toMsg (\_ -> Ok ())
         , timeout = Nothing
         , tracker = Nothing
         }
