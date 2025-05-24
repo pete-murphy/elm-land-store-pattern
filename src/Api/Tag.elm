@@ -60,7 +60,7 @@ get credentials =
 view : Tag -> Html msg
 view tag =
     Html.div
-        [ Html.Attributes.class "flex items-center gap-2 py-0.5 px-2 rounded text-xs font-medium border-[color-mix(in_oklch,var(--color)_20%,oklch(100%_0_0/15%))] text-[color-mix(in_oklch,var(--color)_50%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_25%,oklch(100%_0_0))] border-1"
+        [ Html.Attributes.class "flex gap-2 items-center py-0.5 px-2 text-xs font-medium rounded border-[color-mix(in_oklch,var(--color)_20%,oklch(100%_0_0/15%))] text-[color-mix(in_oklch,var(--color)_50%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_25%,oklch(100%_0_0))] border-1"
         , Html.Attributes.attribute "style" ("--color:" ++ tag.color)
         ]
         [ Html.text tag.name

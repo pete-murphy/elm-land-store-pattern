@@ -123,7 +123,7 @@ view props shared currentRoute { toContentMsg, content } =
                             user =
                                 Credentials.user props.user.credentials
                         in
-                        [ Html.dl [ Attributes.class "text-sm grid gap-3 p-2" ]
+                        [ Html.dl [ Attributes.class "grid gap-3 p-2 text-sm" ]
                             (let
                                 displayTime posix =
                                     LocaleTime.new posix

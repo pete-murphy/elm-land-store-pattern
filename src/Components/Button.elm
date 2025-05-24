@@ -196,7 +196,7 @@ toHtml (Settings settings) =
         )
         [ Html.span
             [ Attributes.classList [ ( "invisible", settings.loading ) ]
-            , Attributes.class "flex items-center gap-1"
+            , Attributes.class "flex gap-1 items-center"
             ]
             (leadingIcon
                 :: children
@@ -238,7 +238,7 @@ secondaryClass =
 
 primarySmallClass : Html.Attribute msg
 primarySmallClass =
-    Attributes.class "py-1 px-2  text-sm text-white bg-gray-800 rounded-lg hover:bg-gray-900 active:bg-gray-950"
+    Attributes.class "py-1 px-2 text-sm text-white bg-gray-800 rounded-lg hover:bg-gray-900 active:bg-gray-950"
 
 
 secondarySmallClass : Html.Attribute msg

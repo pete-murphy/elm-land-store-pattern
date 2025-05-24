@@ -1,14 +1,55 @@
 ---
 description: 
-globs: *.elm
+globs: 
 alwaysApply: false
 ---
 ---
 source: https://github.com/rtfeldman/elm-spa-example/blob/master/src/Article.elm
 ---
 
-Use the pattern in the `Article` type for when you have a resource that has a "preview"/partial type representing when it's viewed as a list/get-all request, and another "fuller" type for when viewing details.
+Use the pattern in the `Article` type for when you have a resource that has a preview/partial type representing when it's viewed as a list/get-all request, and another "fuller" type for when viewing details.
+
+This entails adding "getter" functions for each field, since they can no longer be accessed using normal record access "dot" syntax. Getters *should* match the field names of the corresponding record, for consistency. For example
+
+```elm
+type User a
+    = User Internals a
+
+
+type alias Internals = { id : String, {- ... other fields ... -} }
+
+-- GETTERS
+
+id : User a -> String
+id (User internals _) = internals.id
+
+```
+
+If there are linter errors from name conflicts *do not rename the top-level getter function*, instead rename the other conflicting name
+
+**BAD:**
+
+```elm
+getId : User a -> String
+getId (User internals _) = internals.id
+
+someOtherThing { id } =
+    doSomethingWith id
+```
+
+**GOOD:**
+
+```elm
+id : User a -> String
+id (User internals _) = internals.id
+
+someOtherThing args =
+    doSomethingWith args.id
+```
+
+
 Ignore the use of unqualified imports in this example, it is otherwise representative of good code style overall.
+
 
 ```elm
 -- TYPES

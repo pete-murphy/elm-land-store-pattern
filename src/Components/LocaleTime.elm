@@ -43,8 +43,8 @@ new : Time.Posix -> LocaleTime msg
 new posix =
     Settings
         { posix = posix
-        , dateStyle = Nothing
-        , timeStyle = Nothing
+        , dateStyle = defaultDateStyle
+        , timeStyle = defaultTimeStyle
         , localeAttrs = Nothing
         , relativeAttrs = Nothing
         }
@@ -80,10 +80,10 @@ toHtml (Settings settings) =
             settings.relativeAttrs |> Maybe.withDefault defaultRelativeAttrs
 
         timeStyle =
-            settings.timeStyle |> Maybe.Extra.orElse defaultTimeStyle
+            settings.timeStyle
 
         dateStyle =
-            settings.dateStyle |> Maybe.Extra.orElse defaultDateStyle
+            settings.dateStyle
     in
     [ localeDateTime
         { posix = settings.posix

@@ -1,7 +1,8 @@
-module Pages.Home_ exposing (Model, Msg, page)
+module Pages.Home_ exposing (Data, Model, Msg, page)
 
+import Api.Post as Post exposing (Post)
 import Api.Tag as Tag exposing (Tag)
-import Api.User exposing (User)
+import Api.User as User exposing (User)
 import ApiData exposing (ApiData)
 import Auth
 import Effect exposing (Effect)
@@ -42,20 +43,24 @@ type alias Data a =
 
 type alias Model =
     { tags : Data (List Tag)
-    , users : Data (List (User Api.User.Preview))
+    , users : Data (List (User User.Preview))
+    , posts : Data (List (Post Post.Preview))
     }
 
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
-init user shared _ =
+init user _ _ =
     ( { tags = ApiData.loading
       , users = ApiData.loading
+      , posts = ApiData.loading
       }
     , Effect.batch
         [ Effect.request (Tag.get user.credentials)
             BackendRespondedToGetTags
-        , Effect.request (Api.User.list user.credentials { page = 1, limit = 5 })
+        , Effect.request (User.list user.credentials { page = 1, limit = 5 })
             BackendRespondedToGetUsers
+        , Effect.request (Post.list user.credentials { page = 1, limit = 5, status = Nothing, search = Nothing })
+            BackendRespondedToGetPosts
         ]
     )
 
@@ -70,7 +75,8 @@ type alias ApiResult a =
 
 type Msg
     = BackendRespondedToGetTags (ApiResult (List Tag))
-    | BackendRespondedToGetUsers (ApiResult (Paginated (User Api.User.Preview)))
+    | BackendRespondedToGetUsers (ApiResult (Paginated (User User.Preview)))
+    | BackendRespondedToGetPosts (ApiResult (Paginated (Post Post.Preview)))
     | NoOp
 
 
@@ -84,6 +90,11 @@ update msg model =
 
         BackendRespondedToGetUsers result ->
             ( { model | users = ApiData.fromResult (result |> Result.map .data) }
+            , Effect.none
+            )
+
+        BackendRespondedToGetPosts result ->
+            ( { model | posts = ApiData.fromResult (result |> Result.map .data) }
             , Effect.none
             )
 
@@ -117,7 +128,12 @@ view model =
             , viewSection
                 { title = "Users"
                 , apiData = model.users
-                , view = Api.User.viewPreviewList
+                , view = User.viewPreviewList
+                }
+            , viewSection
+                { title = "Posts"
+                , apiData = model.posts
+                , view = Post.viewPreviewList
                 }
             ]
         ]
@@ -144,5 +160,5 @@ viewSection props =
 
 viewSkeletonSectionContent : Html msg
 viewSkeletonSectionContent =
-    Html.div [ Attributes.class "flex flex-col gap-4 bg-gray-100 p-4 rounded-md min-h-40" ]
+    Html.div [ Attributes.class "flex flex-col gap-4 p-4 bg-gray-100 rounded-md min-h-40" ]
         []

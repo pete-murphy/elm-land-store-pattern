@@ -162,7 +162,7 @@ viewPreviewList users =
 viewPreview : User Preview -> Html msg
 viewPreview (User internals _) =
     Html.div
-        [ Html.Attributes.class "flex items-center gap-3" ]
+        [ Html.Attributes.class "flex gap-3 items-center" ]
         [ Html.img ""
             [ Html.Attributes.alt (internals.firstName ++ " " ++ internals.lastName)
             , Html.Attributes.class "w-10 h-10 rounded-full"
