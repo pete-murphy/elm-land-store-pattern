@@ -1,83 +1,127 @@
 module Components.Button exposing
     ( Button
-    , iconClass
     , new
-    , primaryClass
-    , primarySmallClass
-    , secondaryClass
-    , secondarySmallClass
+    , withAttrs, withLoading, withOnClick, withChildren, withLeadingIcon, withSizeSmall, withText, withTrailingIcon, withVariantIconOnly, withVariantSecondary
     , toHtml
-    , withAttrs
-    , withIconClass
-    , withLoading
-    , withOnClick
-    , withPrimaryClass
-    , withPrimarySmallClass
-    , withSecondaryClass
-    , withSecondarySmallClass
     )
+
+{-|
+
+
+# Button
+
+@docs Button
+
+
+# Constructor
+
+@docs new
+
+
+# Modifiers
+
+@docs withAttrs, withLoading, withOnClick, withChildren, withLeadingIcon, withSizeSmall, withText, withTrailingIcon, withVariantIconOnly, withVariantSecondary
+
+
+# View
+
+@docs toHtml
+
+-}
 
 import Accessibility.Aria as Aria
 import Components.Icon as Icon
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
+import Svg
 import Svg.Attributes
 
 
-type Button msg
+type Button msg r
     = Settings
         { onClick : Maybe msg
         , attrs : List (Html.Attribute msg)
         , loading : Bool
+        , variant : Variant
+        , size : Size
+        , leadingIcon : Maybe Icon.Path
+        , trailingIcon : Maybe Icon.Path
+        , children : List (Html msg)
         }
 
 
-new : Button msg
+type Variant
+    = Primary
+    | Secondary
+    | IconOnly { icon : Icon.Path, label : String }
+
+
+type Size
+    = Small
+    | Medium
+
+
+new : Button msg { r | lacksIcon : (), lacksChildren : () }
 new =
     Settings
         { onClick = Nothing
         , attrs = []
         , loading = False
+        , variant = Primary
+        , size = Medium
+        , leadingIcon = Nothing
+        , trailingIcon = Nothing
+        , children = []
         }
 
 
-withOnClick : msg -> Button msg -> Button msg
+withOnClick : msg -> Button msg r -> Button msg r
 withOnClick onClick (Settings settings) =
     Settings { settings | onClick = Just onClick }
 
 
-withAttrs : List (Html.Attribute msg) -> Button msg -> Button msg
+withAttrs : List (Html.Attribute msg) -> Button msg r -> Button msg r
 withAttrs attrs (Settings settings) =
     Settings { settings | attrs = attrs }
 
 
-withPrimaryClass : Button msg -> Button msg
-withPrimaryClass (Settings settings) =
-    Settings { settings | attrs = primaryClass :: settings.attrs }
+withLeadingIcon : Icon.Path -> Button msg { r | lacksIcon : () } -> Button msg { r | hasIcon : () }
+withLeadingIcon icon (Settings settings) =
+    Settings { settings | leadingIcon = Just icon }
 
 
-withSecondaryClass : Button msg -> Button msg
-withSecondaryClass (Settings settings) =
-    Settings { settings | attrs = secondaryClass :: settings.attrs }
+withTrailingIcon : Icon.Path -> Button msg { r | lacksIcon : () } -> Button msg { r | hasIcon : () }
+withTrailingIcon icon (Settings settings) =
+    Settings { settings | trailingIcon = Just icon }
 
 
-withPrimarySmallClass : Button msg -> Button msg
-withPrimarySmallClass (Settings settings) =
-    Settings { settings | attrs = primarySmallClass :: settings.attrs }
+withSizeSmall : Button msg r -> Button msg r
+withSizeSmall (Settings settings) =
+    Settings { settings | size = Small }
 
 
-withSecondarySmallClass : Button msg -> Button msg
-withSecondarySmallClass (Settings settings) =
-    Settings { settings | attrs = secondarySmallClass :: settings.attrs }
+withVariantSecondary : Button msg r -> Button msg r
+withVariantSecondary (Settings settings) =
+    Settings { settings | variant = Secondary }
 
 
-withIconClass : Button msg -> Button msg
-withIconClass (Settings settings) =
-    Settings { settings | attrs = iconClass :: settings.attrs }
+withVariantIconOnly : Icon.Path -> String -> Button msg { r | lacksIcon : (), lacksChildren : () } -> Button msg { r | hasIcon : (), hasChildren : () }
+withVariantIconOnly icon label (Settings settings) =
+    Settings { settings | variant = IconOnly { icon = icon, label = label } }
 
 
-withLoading : Bool -> Button msg -> Button msg
+withChildren : List (Html msg) -> Button msg { r | lacksChildren : () } -> Button msg { r | hasChildren : () }
+withChildren children (Settings settings) =
+    Settings { settings | children = children }
+
+
+withText : String -> Button msg { r | lacksChildren : () } -> Button msg { r | hasChildren : () }
+withText text (Settings settings) =
+    Settings { settings | children = [ Html.text text ] }
+
+
+withLoading : Bool -> Button msg r -> Button msg r
 withLoading loading (Settings settings) =
     Settings
         { settings
@@ -86,8 +130,58 @@ withLoading loading (Settings settings) =
         }
 
 
-toHtml : List (Html msg) -> Button msg -> Html msg
-toHtml children (Settings settings) =
+toHtml : Button msg { r | hasChildren : () } -> Html msg
+toHtml (Settings settings) =
+    let
+        iconSize : Icon.Size
+        iconSize =
+            case settings.size of
+                Small ->
+                    Icon.Micro
+
+                Medium ->
+                    Icon.Regular
+
+        children =
+            case settings.variant of
+                Primary ->
+                    settings.children
+
+                Secondary ->
+                    settings.children
+
+                IconOnly { icon } ->
+                    [ Icon.view iconSize [] icon ]
+
+        leadingIcon =
+            settings.leadingIcon
+                |> Maybe.map (Icon.view iconSize [])
+                |> Maybe.withDefault (Html.text "")
+                |> Html.map never
+
+        trailingIcon =
+            settings.trailingIcon
+                |> Maybe.map (Icon.view iconSize [])
+                |> Maybe.withDefault (Html.text "")
+                |> Html.map never
+
+        classAttr =
+            case ( settings.variant, settings.size ) of
+                ( Primary, Small ) ->
+                    primarySmallClass
+
+                ( Secondary, Small ) ->
+                    secondarySmallClass
+
+                ( Primary, Medium ) ->
+                    primaryClass
+
+                ( Secondary, Medium ) ->
+                    secondaryClass
+
+                ( IconOnly _, _ ) ->
+                    iconClass
+    in
     Html.button
         ((case settings.onClick of
             Just onClick ->
@@ -96,14 +190,27 @@ toHtml children (Settings settings) =
             Nothing ->
                 Attributes.class ""
          )
-            :: Attributes.class "grid place-items-center font-semibold active:transition *:[grid-area:1/-1] aria-disabled:cursor-not-allowed"
+            :: Attributes.class "grid place-items-center font-semibold active:transition *:[grid-area:1/-1] aria-disabled:cursor-not-allowed aria-disabled:opacity-75"
+            :: classAttr
             :: settings.attrs
         )
-        [ Html.span [ Attributes.classList [ ( "invisible", settings.loading ) ] ]
-            children
+        [ Html.span
+            [ Attributes.classList [ ( "invisible", settings.loading ) ]
+            , Attributes.class "flex items-center gap-1"
+            ]
+            (leadingIcon
+                :: children
+                ++ [ trailingIcon ]
+            )
         , if settings.loading then
-            Icon.view [ Svg.Attributes.class "size-4" ]
-                Icon.spinningThreeQuarterCircle
+            spinningThreeQuarterCircle
+                [ case settings.size of
+                    Small ->
+                        Svg.Attributes.class "size-4"
+
+                    Medium ->
+                        Svg.Attributes.class "size-6"
+                ]
 
           else
             Html.text ""
@@ -137,3 +244,24 @@ primarySmallClass =
 secondarySmallClass : Html.Attribute msg
 secondarySmallClass =
     Attributes.class "py-1 px-2 text-sm text-gray-800 rounded-lg bg-gray-800/0 hover:bg-gray-800/5 active:bg-gray-800/10"
+
+
+spinningThreeQuarterCircle : List (Svg.Attribute msg) -> Svg.Svg msg
+spinningThreeQuarterCircle attrs =
+    Svg.svg
+        ([ Svg.Attributes.width "24"
+         , Svg.Attributes.height "24"
+         , Svg.Attributes.viewBox "0 0 24 24"
+         , Svg.Attributes.fill "none"
+         ]
+            ++ attrs
+        )
+        [ Svg.path
+            [ Svg.Attributes.strokeLinecap "round"
+            , Svg.Attributes.strokeWidth "2"
+            , Svg.Attributes.stroke "currentColor"
+            , Svg.Attributes.d "M 10 10 m 8, 0 a 8,8 0 1,0 -16,0 a 8,8 0 0,0 8,8"
+            , Svg.Attributes.class "animate-spin origin-center"
+            ]
+            []
+        ]

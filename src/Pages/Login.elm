@@ -229,9 +229,9 @@ loginForm errors =
                     [ Attributes.attribute "autocomplete" "current-password"
                     ]
                 , Button.new
-                    |> Button.withPrimaryClass
                     |> Button.withLoading formContext.submitting
-                    |> Button.toHtml [ Html.text "Log in" ]
+                    |> Button.withText "Log in"
+                    |> Button.toHtml
                 ]
         }
     )

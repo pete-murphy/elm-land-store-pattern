@@ -1,16 +1,18 @@
 module Auth.Credentials exposing
     ( Credentials, LoginResponse
     , create, user, accessToken, refreshToken
-    , httpHeaders, isExpired, canRefresh
-    , loginResponseDecoder
     , updateTokens
+    , httpHeaders, isExpired
+    , loginResponseDecoder
     )
 
 {-| Authentication credentials management.
 
 @docs Credentials, LoginResponse
 @docs create, user, accessToken, refreshToken
-@docs httpHeaders, isExpired, canRefresh
+@docs updateTokens
+
+@docs httpHeaders, isExpired
 @docs loginResponseDecoder
 
 -}
@@ -133,12 +135,3 @@ httpHeaders credentials =
 isExpired : Time.Posix -> Credentials -> Bool
 isExpired currentTime credentials =
     AccessToken.isExpired currentTime (accessToken credentials)
-
-
-{-| Check if we can refresh the token (refresh token exists)
--}
-canRefresh : Credentials -> Bool
-canRefresh (Credentials data) =
-    -- In a real app, you might also check if refresh token is expired
-    -- For now, we'll assume if we have it, we can use it
-    RefreshToken.toString data.refreshToken /= ""

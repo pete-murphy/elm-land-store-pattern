@@ -9,11 +9,9 @@ import Auth.User as User
 import Components.Button as Button
 import Components.Icon as Icon
 import Components.LocaleTime as LocaleTime
-import CustomElements
 import Effect exposing (Effect)
 import Html
 import Html.Attributes as Attributes
-import Html.Events as Events
 import Json.Decode as Decode
 import Jwt
 import Layout exposing (Layout)
@@ -22,7 +20,6 @@ import Route exposing (Route)
 import Route.Path
 import Shared
 import Shared.Model
-import Svg.Attributes
 import Time
 import View exposing (View)
 
@@ -69,7 +66,6 @@ init _ =
 type Msg
     = UserClickedRenew
     | UserClickedLogOut
-    | SharedMsg Shared.Msg
 
 
 update : Props -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -83,11 +79,6 @@ update _ _ msg model =
         UserClickedLogOut ->
             ( model
             , Effect.logOut
-            )
-
-        SharedMsg sharedMsg ->
-            ( model
-            , Effect.sendSharedMsg sharedMsg
             )
 
 
@@ -119,7 +110,7 @@ view props shared currentRoute { toContentMsg, content } =
                     |> Result.Extra.andMap (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
         in
         [ Html.div [ Attributes.class "grid grid-cols-[auto_1fr] min-h-dvh" ]
-            [ Html.aside [ Attributes.class "p-4 bg-gray-100 shadow-lg" ]
+            [ Html.aside [ Attributes.class "p-4 bg-gray-100" ]
                 ((case infoFromUser of
                     Ok ( expiresAt, issuedAt ) ->
                         let
@@ -136,6 +127,7 @@ view props shared currentRoute { toContentMsg, content } =
                             (let
                                 displayTime posix =
                                     LocaleTime.new posix
+                                        |> LocaleTime.withRelativeAttrs [ Attributes.class "text-xs" ]
                                         |> LocaleTime.toHtml
                                         |> Html.div [ Attributes.class "grid" ]
 
@@ -156,30 +148,21 @@ view props shared currentRoute { toContentMsg, content } =
                                     )
                             )
                         , Button.new
+                            |> Button.withOnClick (toContentMsg UserClickedRenew)
+                            |> Button.withSizeSmall
+                            |> Button.withVariantSecondary
+                            |> Button.withTrailingIcon Icon.arrowPath
+                            |> Button.withLoading (ApiData.isLoading shared.credentials)
+                            |> Button.withText "Renew"
+                            |> Button.toHtml
+                        , Button.new
                             |> Button.withOnClick (toContentMsg UserClickedLogOut)
-                            |> Button.withSecondarySmallClass
+                            |> Button.withSizeSmall
+                            |> Button.withVariantSecondary
+                            |> Button.withTrailingIcon Icon.arrowRightStartOnRectanglePath
                             |> Button.withLoading (ApiData.isLoading shared.logout)
-                            |> Button.toHtml [ Html.text "Log out" ]
-                        , Html.div [ Attributes.class "flex gap-4 items-baseline" ]
-                            [ let
-                                loading =
-                                    ApiData.isLoading shared.credentials
-                              in
-                              Html.button
-                                [ Attributes.class "grid relative place-items-center py-1 px-2 text-sm font-semibold rounded-lg rid aria-disabled:opacity-75 aria-disabled:cursor-not-allowed *:[grid-area:1/-1] hover:bg-gray-800/5 active:bg-gray-800/10"
-                                , Aria.disabled loading
-                                , Events.onClick (toContentMsg UserClickedRenew)
-                                ]
-                                [ Html.span [ Attributes.classList [ ( "invisible", loading ) ] ]
-                                    [ Html.text "Renew" ]
-                                , if loading then
-                                    Icon.view [ Svg.Attributes.class "size-4" ]
-                                        Icon.spinningThreeQuarterCircle
-
-                                  else
-                                    Html.text ""
-                                ]
-                            ]
+                            |> Button.withText "Log out"
+                            |> Button.toHtml
                         ]
 
                     Err err ->
@@ -201,7 +184,7 @@ view props shared currentRoute { toContentMsg, content } =
                                            )
                                     )
                         in
-                        [ Html.nav []
+                        [ Html.nav [ Attributes.class "p-2" ]
                             [ Html.ul [ Attributes.class "flex gap-4" ]
                                 ([ ( Route.Path.Home_, "Home" )
                                  ]
