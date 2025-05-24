@@ -62,10 +62,6 @@ handleRequest strategy request store =
             ( newStoreUpdate, Just req )
 
 
-
--- CacheFirst ->
-
-
 handleRequestPaginated :
     PaginatedStrategy
     -> Request.Msg Paginated.Config
@@ -85,9 +81,9 @@ handleRequestPaginated strategy request store =
                 |> Debug.log "lastFetched"
 
         maybePaginationParams =
-            case ( lastFetched, strategy ) of
-                ( Just { morePages, page }, NextPage ) ->
-                    if morePages then
+            case ( lastFetched |> Maybe.map .pagination, strategy ) of
+                ( Just { hasNextPage, page }, NextPage ) ->
+                    if hasNextPage then
                         Just
                             [ Url.Builder.int "page" (page + 1)
                             , Url.Builder.int "per_page" config.perPage
@@ -171,7 +167,7 @@ handleResponsePaginated request response store =
                         (\nextPage ->
                             { nextPage
                                 | data =
-                                    case nextPage.page of
+                                    case nextPage.pagination.page of
                                         1 ->
                                             nextPage.data
 

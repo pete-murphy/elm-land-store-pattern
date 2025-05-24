@@ -1,4 +1,4 @@
-module Api.Tag exposing (Tag, get, viewList)
+module Api.Tag exposing (..)
 
 import Accessibility as Html exposing (Html)
 import Auth.Credentials as Credentials exposing (Credentials)

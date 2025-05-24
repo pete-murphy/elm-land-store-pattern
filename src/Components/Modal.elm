@@ -9,7 +9,7 @@ module Components.Modal exposing
 opened via `dialog.showModal()`).
 -}
 
-import Accessibility.Aria as Aria
+import Components.Button as Button
 import Components.Icon as Icon
 import Html exposing (Html)
 import Html.Attributes as Attributes
@@ -96,9 +96,8 @@ defaultAttrs =
 defaultHeader : Html msg
 defaultHeader =
     Html.form [ Attributes.class "grid justify-end", Attributes.method "dialog" ]
-        [ Html.button
-            [ Attributes.autofocus True
-            , Aria.label "Close"
-            ]
-            [ Icon.view [] Icon.x ]
+        [ Button.new
+            |> Button.withVariantIconOnly Icon.x "Close"
+            |> Button.withAttrs [ Attributes.autofocus True ]
+            |> Button.toHtml
         ]

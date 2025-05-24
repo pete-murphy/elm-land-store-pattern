@@ -13,7 +13,7 @@ import Html
 import Html.Attributes as Attributes
 import Http.Extra
 import Page exposing (Page)
-import Result.Extra exposing (error)
+import Result.Extra
 import Route exposing (Route)
 import Shared
 import Shared.Model
