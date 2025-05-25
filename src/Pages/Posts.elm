@@ -16,7 +16,7 @@ import Form.FieldView as FieldView
 import Form.Validation as Validation
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Http.DetailedError exposing (DetailedError)
+import Http.DetailedError as DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
@@ -389,8 +389,7 @@ viewPostsSection postsData =
             viewSkeletonContent
 
         Loadable.Failure error ->
-            -- TODO: Show error properly
-            Html.text (Debug.toString error)
+            Html.text (DetailedError.toString error)
 
         Loadable.Success paginatedPosts ->
             Html.div [ Attributes.class "flex flex-col gap-4" ]

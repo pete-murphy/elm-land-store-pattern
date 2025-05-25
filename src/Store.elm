@@ -79,7 +79,6 @@ handleRequestPaginated strategy request store =
         lastFetched =
             Dict.get key store
                 |> Maybe.andThen Loadable.toMaybe
-                |> Debug.log "lastFetched"
 
         maybePaginationParams =
             case ( lastFetched |> Maybe.map .pagination, strategy ) of

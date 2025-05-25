@@ -7,7 +7,7 @@ import Auth
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Http.DetailedError exposing (DetailedError)
+import Http.DetailedError as DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
@@ -150,8 +150,7 @@ viewSection props =
                 viewSkeletonSectionContent
 
             Loadable.Failure error ->
-                -- TODO: Show error
-                Html.text (Debug.toString error)
+                Html.text (DetailedError.toString error)
 
             Loadable.Success value ->
                 props.view value

@@ -41,4 +41,4 @@ onPageLoad shared route =
 -}
 viewCustomPage : Shared.Model -> Route () -> View Never
 viewCustomPage shared _ =
-    View.fromString (Debug.toString shared)
+    View.fromString "Should not be reachable"
