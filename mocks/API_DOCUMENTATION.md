@@ -194,6 +194,12 @@ Get post by ID (increments view count).
 
 - **Response**: Post object or 404
 
+#### `GET /api/posts/slug/:slug`
+
+Get post by slug (increments view count).
+
+- **Response**: Post object or 404
+
 #### `POST /api/posts`
 
 Create a new post.
@@ -353,6 +359,14 @@ The mock database is seeded with:
 
 ```javascript
 fetch("/api/posts?page=1&limit=5&status=published");
+```
+
+### Get post by slug (SEO-friendly URLs)
+
+```javascript
+// Frontend route: /posts/my-awesome-post-title
+const slug = "my-awesome-post-title"; // from URL params
+fetch(`/api/posts/slug/${slug}`);
 ```
 
 ### Search posts by keyword

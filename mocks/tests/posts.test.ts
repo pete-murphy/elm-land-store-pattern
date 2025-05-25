@@ -149,6 +149,50 @@ describe("Posts API", () => {
     });
   });
 
+  describe("GET /api/posts/slug/:slug", () => {
+    it("should return a specific post by slug and increment view count", async () => {
+      const testPost = getTestPost();
+      const initialViewCount = testPost?.viewCount || 0;
+
+      const response = await fetch(`${API_BASE}/posts/slug/${testPost?.slug}`);
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+
+      expect(data.id).toBe(testPost?.id);
+      expect(data.title).toBe(testPost?.title);
+      expect(data.slug).toBe(testPost?.slug);
+      expect(data.viewCount).toBe(initialViewCount + 1);
+    });
+
+    it("should return 404 for non-existent slug", async () => {
+      const response = await fetch(`${API_BASE}/posts/slug/non-existent-slug`);
+      expect(response.status).toBe(404);
+    });
+
+    it("should return the same post data when accessed by slug vs ID", async () => {
+      const testPost = getTestPost();
+
+      // Get post by ID
+      const idResponse = await fetch(`${API_BASE}/posts/${testPost?.id}`);
+      const postById = await idResponse.json();
+
+      // Get post by slug
+      const slugResponse = await fetch(
+        `${API_BASE}/posts/slug/${testPost?.slug}`
+      );
+      const postBySlug = await slugResponse.json();
+
+      expect(slugResponse.status).toBe(200);
+      expect(postBySlug.id).toBe(postById.id);
+      expect(postBySlug.title).toBe(postById.title);
+      expect(postBySlug.content).toBe(postById.content);
+      expect(postBySlug.slug).toBe(postById.slug);
+      // View counts will differ by 2 since we fetched twice
+      expect(postBySlug.viewCount).toBe(postById.viewCount + 1);
+    });
+  });
+
   describe("POST /api/posts", () => {
     it("should create a new post with authentication", async () => {
       const accessToken = await getAccessToken();

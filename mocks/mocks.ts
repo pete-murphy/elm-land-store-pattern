@@ -799,6 +799,33 @@ export const handlers = (apiBase?: string) => {
       return HttpResponse.json(updatedPost);
     }),
 
+    // Get post by slug
+    http.get(`${API_BASE}/posts/slug/:slug`, ({ params }) => {
+      const post = db.post.findFirst({
+        where: { slug: { equals: params.slug as string } },
+      });
+
+      if (!post) {
+        return HttpResponse.json(
+          { message: "Post not found" },
+          { status: 404 }
+        );
+      }
+
+      // Increment view count
+      const updatedPostResult = db.post.update({
+        where: { id: { equals: post.id } },
+        data: { viewCount: (post.viewCount || 0) + 1 },
+      });
+
+      // refetch post to get updated view count
+      const updatedPost = db.post.findFirst({
+        where: { slug: { equals: params.slug as string } },
+      });
+
+      return HttpResponse.json(updatedPost);
+    }),
+
     // Create post
     http.post(`${API_BASE}/posts`, async ({ request }) => {
       const currentUser = await getCurrentUser(request);
