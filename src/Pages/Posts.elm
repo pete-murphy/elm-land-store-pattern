@@ -5,6 +5,7 @@ import Auth
 import Auth.Credentials exposing (Credentials)
 import Components.Button as Button
 import Components.ErrorSummary as ErrorSummary
+import Components.Icon.Path as Path
 import Components.Modal as Modal
 import CustomElements
 import Dict exposing (Dict)
@@ -332,6 +333,7 @@ view model =
                 [ Button.new
                     |> Button.withText "Create Post"
                     |> Button.withOnClick UserClickedCreatePost
+                    |> Button.withLeadingIcon Path.plus
                     |> Button.toHtml
                 ]
             , viewCreatePostModal model

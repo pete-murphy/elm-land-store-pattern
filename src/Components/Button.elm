@@ -197,7 +197,7 @@ toHtml (Settings settings) =
         )
         [ Html.span
             [ Attributes.classList [ ( "invisible", settings.loading ) ]
-            , Attributes.class "flex gap-1 items-center"
+            , Attributes.class "flex gap-2 items-center"
             ]
             (leadingIcon
                 :: children

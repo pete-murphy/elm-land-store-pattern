@@ -1,10 +1,12 @@
 module Pages.Posts.Slug_ exposing (Model, Msg, page)
 
+import Api.Comment as Comment exposing (Comment)
 import Api.Post exposing (Post)
 import Api.Slug as Slug
 import Api.Tag as Tag
 import Api.User as User
 import Auth
+import Auth.Credentials exposing (Credentials)
 import Components.LocaleTime as LocaleTime
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -13,6 +15,7 @@ import Http.DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
+import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
 import View exposing (View)
@@ -22,7 +25,7 @@ page : Auth.User -> Shared.Model -> Route { slug : String } -> Page Model Msg
 page user shared route =
     Page.new
         { init = init user route
-        , update = update
+        , update = update user
         , subscriptions = subscriptions
         , view = view
         }
@@ -44,6 +47,7 @@ type alias Data a =
 
 type alias Model =
     { post : Data (Post Api.Post.Details)
+    , comments : Data (Paginated Comment)
     }
 
 
@@ -54,6 +58,7 @@ init user route () =
             Slug.fromRoute route
     in
     ( { post = Loadable.loading
+      , comments = Loadable.notAsked
       }
     , Effect.request (Api.Post.get user.credentials slug)
         BackendRespondedToGetPost
@@ -70,14 +75,36 @@ type alias ApiResult a =
 
 type Msg
     = BackendRespondedToGetPost (ApiResult (Post Api.Post.Details))
+    | BackendRespondedToGetComments (ApiResult (Paginated Comment))
     | NoOp
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Auth.User -> Msg -> Model -> ( Model, Effect Msg )
+update user msg model =
     case msg of
         BackendRespondedToGetPost result ->
-            ( { model | post = Loadable.fromResult result }
+            case result of
+                Ok post ->
+                    ( { model
+                        | post = Loadable.fromResult result
+                        , comments = Loadable.loading
+                      }
+                    , Effect.request
+                        (Comment.get
+                            user.credentials
+                            (Api.Post.id post)
+                            { page = 1, limit = 50, parentOnly = False }
+                        )
+                        BackendRespondedToGetComments
+                    )
+
+                Err error ->
+                    ( { model | post = Loadable.fromResult result }
+                    , Effect.none
+                    )
+
+        BackendRespondedToGetComments result ->
+            ( { model | comments = Loadable.fromResult result }
             , Effect.none
             )
 
@@ -122,12 +149,12 @@ view model =
 
         Loadable.Success post ->
             { title = Api.Post.title post
-            , body = [ viewPost post ]
+            , body = [ viewPost post model.comments ]
             }
 
 
-viewPost : Post Api.Post.Details -> Html Msg
-viewPost post =
+viewPost : Post Api.Post.Details -> Data (Paginated Comment) -> Html Msg
+viewPost post comments =
     Html.article [ Attributes.class "flex flex-col gap-6" ]
         [ Html.header []
             [ Html.div [ Attributes.class "flex gap-2 items-center mb-4 text-sm text-gray-600" ]
@@ -163,6 +190,56 @@ viewPost post =
                     , Tag.viewList (Api.Post.tags post)
                     ]
             ]
+        , viewComments comments
+        ]
+
+
+viewComments : Data (Paginated Comment) -> Html Msg
+viewComments commentsData =
+    Html.div [ Attributes.class "pt-6 border-t border-gray-200" ]
+        [ Html.h3 [ Attributes.class "mb-4 text-lg font-semibold text-gray-900" ]
+            [ Html.text "Comments" ]
+        , case Loadable.value commentsData of
+            Loadable.Empty ->
+                Html.div [ Attributes.class "animate-pulse" ]
+                    [ Html.div [ Attributes.class "mb-4 h-16 bg-gray-200 rounded" ] []
+                    , Html.div [ Attributes.class "mb-4 h-16 bg-gray-200 rounded" ] []
+                    ]
+
+            Loadable.Failure error ->
+                Html.div [ Attributes.class "p-4 bg-red-50 rounded-md" ]
+                    [ Html.p [ Attributes.class "text-red-700" ]
+                        [ Html.text ("Error loading comments: " ++ Http.DetailedError.toString error) ]
+                    ]
+
+            Loadable.Success paginatedComments ->
+                if List.isEmpty paginatedComments.data then
+                    Html.p [ Attributes.class "text-gray-500 italic" ]
+                        [ Html.text "No comments yet." ]
+
+                else
+                    Html.div [ Attributes.class "flex flex-col gap-4" ]
+                        (List.map viewComment paginatedComments.data)
+        ]
+
+
+viewComment : Comment -> Html Msg
+viewComment comment =
+    Html.div [ Attributes.class "p-4 bg-gray-50 rounded-lg" ]
+        [ Html.div [ Attributes.class "flex gap-2 items-center mb-2 text-sm text-gray-600" ]
+            [ Html.text ("by " ++ username (Comment.author comment))
+            , Html.text " • "
+            , Html.span []
+                (LocaleTime.new (Comment.createdAt comment)
+                    |> LocaleTime.withTimeStyle Nothing
+                    |> LocaleTime.withLocaleAttrs []
+                    |> LocaleTime.withRelativeAttrs []
+                    |> LocaleTime.toHtml
+                    |> List.intersperse (Html.text " • ")
+                )
+            ]
+        , Html.p [ Attributes.class "text-gray-900" ]
+            [ Html.text (Comment.content comment) ]
         ]
 
 
