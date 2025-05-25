@@ -14,6 +14,7 @@ module Auth.User exposing
 
 -}
 
+import Api.UserId as UserId exposing (UserId)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline as Pipeline
 
@@ -25,7 +26,7 @@ type User
 
 
 type alias UserData =
-    { id : String
+    { id : UserId
     , username : String
     , email : String
     , role : Role
@@ -51,7 +52,7 @@ type Role
 decoder : Decoder User
 decoder =
     Decode.succeed UserData
-        |> Pipeline.required "id" Decode.string
+        |> Pipeline.required "id" UserId.decoder
         |> Pipeline.required "username" Decode.string
         |> Pipeline.required "email" Decode.string
         |> Pipeline.required "role" roleDecoder
@@ -86,7 +87,7 @@ roleDecoder =
 
 {-| Get user ID
 -}
-id : User -> String
+id : User -> UserId
 id (User userData) =
     userData.id
 

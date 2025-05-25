@@ -1,6 +1,7 @@
 module Api.User exposing (..)
 
 import Accessibility as Html exposing (Html)
+import Api.UserId as UserId exposing (UserId)
 import Auth.Credentials as Credentials exposing (Credentials)
 import Html.Attributes
 import Http
@@ -18,7 +19,7 @@ type User a
 
 
 type alias Internals =
-    { id : String
+    { id : UserId
     , firstName : String
     , lastName : String
     , username : String
@@ -54,7 +55,7 @@ type Role
 internalDecoder : Decoder Internals
 internalDecoder =
     Json.Decode.succeed Internals
-        |> Json.Decode.Pipeline.required "id" Json.Decode.string
+        |> Json.Decode.Pipeline.required "id" UserId.decoder
         |> Json.Decode.Pipeline.required "firstName" Json.Decode.string
         |> Json.Decode.Pipeline.required "lastName" Json.Decode.string
         |> Json.Decode.Pipeline.required "username" Json.Decode.string
