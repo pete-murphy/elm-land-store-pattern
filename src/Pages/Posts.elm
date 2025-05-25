@@ -2,6 +2,8 @@ module Pages.Posts exposing (Model, Msg, page)
 
 import Api.Post exposing (Post, Preview)
 import Auth
+import Auth.Credentials exposing (Credentials)
+import CustomElements
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
@@ -41,12 +43,14 @@ type alias Data a =
 
 type alias Model =
     { posts : Data (Paginated (Post Preview))
+    , credentials : Credentials
     }
 
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
 init user _ _ =
     ( { posts = Loadable.loading
+      , credentials = user.credentials
       }
     , Effect.request (Api.Post.list user.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
         BackendRespondedToGetPosts
@@ -63,6 +67,7 @@ type alias ApiResult a =
 
 type Msg
     = BackendRespondedToGetPosts (ApiResult (Paginated (Post Preview)))
+    | UserScrolledToBottom
     | NoOp
 
 
@@ -70,9 +75,42 @@ update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         BackendRespondedToGetPosts result ->
-            ( { model | posts = Loadable.fromResult result }
+            ( { model
+                | posts =
+                    case Loadable.value model.posts of
+                        Loadable.Empty ->
+                            Loadable.fromResult result
+
+                        _ ->
+                            Loadable.succeed Paginated.merge
+                                |> Loadable.andMap model.posts
+                                |> Loadable.andMap (Loadable.fromResult result)
+                                |> Loadable.toNotLoading
+              }
             , Effect.none
             )
+
+        UserScrolledToBottom ->
+            case Loadable.value model.posts of
+                Loadable.Success paginatedPosts ->
+                    if paginatedPosts.pagination.hasNextPage then
+                        ( { model | posts = Loadable.toLoading model.posts }
+                        , Effect.request
+                            (Api.Post.list model.credentials
+                                { page = paginatedPosts.pagination.page + 1
+                                , limit = paginatedPosts.pagination.limit
+                                , status = Nothing
+                                , search = Nothing
+                                }
+                            )
+                            BackendRespondedToGetPosts
+                        )
+
+                    else
+                        ( model, Effect.none )
+
+                _ ->
+                    ( model, Effect.none )
 
         NoOp ->
             ( model, Effect.none )
@@ -113,7 +151,18 @@ viewPostsSection postsData =
             Html.text (Debug.toString error)
 
         Loadable.Success paginatedPosts ->
-            Api.Post.viewPreviewList paginatedPosts.data
+            Html.div []
+                [ Api.Post.viewPreviewList paginatedPosts.data
+                , CustomElements.intersectionSentinel
+                    { onIntersect = UserScrolledToBottom
+                    , disabled = Loadable.isLoading postsData
+                    }
+                , if Loadable.isLoading postsData then
+                    viewSkeletonContent
+
+                  else
+                    Html.text ""
+                ]
 
 
 viewSkeletonContent : Html msg

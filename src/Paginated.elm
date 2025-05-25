@@ -50,3 +50,10 @@ paginationDecoder =
         |> Json.Decode.Pipeline.required "totalCount" Json.Decode.int
         |> Json.Decode.Pipeline.required "hasNextPage" Json.Decode.bool
         |> Json.Decode.Pipeline.required "hasPreviousPage" Json.Decode.bool
+
+
+merge : Paginated a -> Paginated a -> Paginated a
+merge previous next =
+    { data = previous.data ++ next.data
+    , pagination = next.pagination
+    }
