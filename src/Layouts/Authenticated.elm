@@ -100,7 +100,7 @@ view :
 view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
-        [ Html.div [ Attributes.class "grid mx-auto max-w-3xl grid-cols-[auto_1fr]" ]
+        [ Html.div [ Attributes.class "grid mx-auto max-w-4xl grid-cols-[min(40%,20rem)_1fr]" ]
             [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-8 h-dvh" ]
                 ([ viewNav currentRoute
                  , Html.div [ Attributes.class "grid gap-8 self-end" ]
@@ -193,7 +193,7 @@ viewNav currentRoute =
     let
         navLink path =
             Html.a
-                (Attributes.class "relative p-2 font-semibold rounded-md active:transition aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:h-[calc(100%-0.5rem)] before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 bg-gray-800/0 hover:bg-gray-800/5 active:bg-gray-800/10"
+                (Attributes.class "relative p-2 font-semibold rounded-md active:transition aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:transition-all before:h-4 before:bg-gray-800/0 before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 hover:not-aria-[current=page]:before:bg-gray-800/25 hover:before:h-[calc(100%-0.5rem)]"
                     :: (if path == currentRoute.path then
                             [ Aria.currentPage ]
 

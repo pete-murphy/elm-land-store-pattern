@@ -237,7 +237,7 @@ viewPreview : User Preview -> Html msg
 viewPreview (User internals _) =
     Html.a
         [ Route.Path.href (Route.Path.Users_UserId_ { userId = UserId.toString internals.id })
-        , Html.Attributes.class "flex gap-3 items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+        , Html.Attributes.class "flex gap-3 items-center p-3 rounded-lg transition-colors hover:bg-gray-50"
         ]
         [ Html.img ""
             [ Html.Attributes.class "w-10 h-10 rounded-full"

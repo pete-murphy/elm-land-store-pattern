@@ -133,12 +133,10 @@ viewUser user =
                 , Attributes.src (Api.User.avatarUrl user)
                 ]
             , Html.div [ Attributes.class "flex-1" ]
-                [ Html.h1 [ Attributes.class "mb-2 text-2xl font-bold" ]
-                    [ Html.text (Api.User.fullName user) ]
+                [ Html.div [ Attributes.class "mb-3 font-bold" ]
+                    [ Html.text ("@" ++ Api.User.username user) ]
                 , Html.div [ Attributes.class "flex gap-2 items-center mb-3 text-sm text-gray-600" ]
-                    [ Html.text ("@" ++ Api.User.username user)
-                    , Html.text " • "
-                    , Html.text (Api.User.roleToString (Api.User.role user))
+                    [ Html.text (Api.User.roleToString (Api.User.role user))
                     , Html.text " • "
                     , Html.text
                         (if Api.User.isActive user then
@@ -149,12 +147,15 @@ viewUser user =
                         )
                     ]
                 , Html.div [ Attributes.class "flex gap-1 text-sm text-gray-600" ]
-                    (LocaleTime.new (Api.User.createdAt user)
-                        |> LocaleTime.withTimeStyle Nothing
-                        |> LocaleTime.withLocaleAttrs []
-                        |> LocaleTime.withRelativeAttrs []
-                        |> LocaleTime.toHtml
-                        |> List.map (\timeHtml -> Html.span [] [ Html.text "Joined ", timeHtml ])
+                    (Html.div [] [ Html.text "Joined" ]
+                        :: (LocaleTime.new (Api.User.createdAt user)
+                                |> LocaleTime.withTimeStyle Nothing
+                                |> LocaleTime.withLocaleAttrs []
+                                |> LocaleTime.withRelativeAttrs
+                                    [ Attributes.class "before:content-['('] after:content-[')']"
+                                    ]
+                                |> LocaleTime.toHtml
+                           )
                     )
                 ]
             ]

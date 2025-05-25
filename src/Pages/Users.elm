@@ -167,7 +167,7 @@ viewSkeletonContent : Html msg
 viewSkeletonContent =
     Html.div [ Attributes.class "flex flex-col gap-6" ]
         (List.repeat 4
-            (Html.div [ Attributes.class "bg-gray-100 rounded-md min-h-20 animate-pulse" ]
+            (Html.div [ Attributes.class "bg-gray-100 rounded-md animate-pulse min-h-20" ]
                 []
             )
         )

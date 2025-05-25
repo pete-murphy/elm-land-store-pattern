@@ -160,5 +160,5 @@ viewSection props =
 
 viewSkeletonSectionContent : Html msg
 viewSkeletonSectionContent =
-    Html.div [ Attributes.class "flex flex-col gap-4 p-4 bg-gray-100 animate-pulse rounded-md min-h-40" ]
+    Html.div [ Attributes.class "flex flex-col gap-4 p-4 bg-gray-100 rounded-md animate-pulse min-h-40" ]
         []
