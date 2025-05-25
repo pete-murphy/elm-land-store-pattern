@@ -208,6 +208,7 @@ viewNav currentRoute =
         [ Html.ul [ Attributes.class "grid gap-4" ]
             ([ ( Path.home, Route.Path.Home_, "Home" )
              , ( Path.rectangleStack, Route.Path.Posts, "Posts" )
+             , ( Path.tag, Route.Path.Tags, "Tags" )
              , ( Path.user, Route.Path.Users, "Users" )
              ]
                 |> List.map

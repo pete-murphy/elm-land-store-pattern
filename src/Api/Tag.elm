@@ -8,6 +8,7 @@ import Http.Extra exposing (Request)
 import Iso8601
 import Json.Decode exposing (Decoder)
 import Json.Decode.Pipeline
+import Route.Path
 import Time exposing (Posix)
 import Url.Builder
 
@@ -67,7 +68,24 @@ view tag =
         ]
 
 
+viewClickable : Tag -> Html msg
+viewClickable tag =
+    Html.a
+        [ Route.Path.href (Route.Path.Tags_Slug_ { slug = tag.slug })
+        , Html.Attributes.class "flex gap-2 items-center py-0.5 px-2 text-xs font-medium rounded text-[color-mix(in_oklch,var(--color)_25%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_10%,oklch(100%_0_0))] hover:bg-[color-mix(in_oklch,var(--color)_15%,oklch(100%_0_0))] transition-colors"
+        , Html.Attributes.attribute "style" ("--color:" ++ tag.color)
+        ]
+        [ Html.text tag.name
+        ]
+
+
 viewList : List Tag -> Html msg
 viewList tags =
     Html.ul [ Html.Attributes.class "flex flex-wrap gap-2" ]
         (List.map view tags)
+
+
+viewClickableList : List Tag -> Html msg
+viewClickableList tags =
+    Html.ul [ Html.Attributes.class "flex flex-wrap gap-2" ]
+        (List.map viewClickable tags)

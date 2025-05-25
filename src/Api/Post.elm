@@ -14,6 +14,7 @@ module Api.Post exposing
     , get
     , id
     , list
+    , listByTag
     , previewDecoder
     , slug
     , status
@@ -172,6 +173,25 @@ list credentials params =
     }
 
 
+listByTag :
+    Credentials
+    -> String
+    -> { page : Int, limit : Int }
+    -> Request (Paginated (Post Preview))
+listByTag credentials tagSlug params =
+    { method = "GET"
+    , headers = Credentials.httpHeaders credentials
+    , url =
+        Url.Builder.absolute
+            [ "api", "tags", tagSlug, "posts" ]
+            [ Url.Builder.int "page" params.page
+            , Url.Builder.int "limit" params.limit
+            ]
+    , body = Http.emptyBody
+    , decoder = Paginated.decoder previewDecoder
+    }
+
+
 get :
     Credentials
     -> Slug
@@ -309,7 +329,7 @@ viewPreview (Post internals _) =
                 Html.div [] []
 
               else
-                Tag.viewList internals.tags
+                Tag.viewClickableList internals.tags
             , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-600 text-end text-nowrap line-clamp-1" ]
                 (LocaleTime.new internals.createdAt
                     |> LocaleTime.withTimeStyle Nothing
