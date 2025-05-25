@@ -73,7 +73,7 @@ const verifyPassword = (password: string, hashedPassword: string): boolean => {
 export const db = factory({
   user: {
     id: primaryKey(faker.string.uuid),
-    username: faker.internet.username,
+    username: faker.internet.userName,
     email: faker.internet.email,
     password: () => hashPassword("password123"), // Default password for all demo users
     firstName: faker.person.firstName,

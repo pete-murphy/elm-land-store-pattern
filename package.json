@@ -18,7 +18,7 @@
     "vitest": "^3.1.4"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.8.0",
+    "@faker-js/faker": "^8.4.1",
     "@github/relative-time-element": "^4.4.8",
     "chrono-node": "^2.8.0",
     "jose": "^6.0.11"
