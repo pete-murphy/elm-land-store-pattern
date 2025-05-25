@@ -79,7 +79,11 @@ export const db = factory({
     firstName: faker.person.firstName,
     lastName: faker.person.lastName,
     bio: nullable(() => faker.lorem.paragraph()),
-    avatarUrl: faker.image.avatar,
+    avatarUrl: () =>
+      `https://avatars.githubusercontent.com/u/${faker.number.int({
+        min: 10000,
+        max: 99999999,
+      })}`,
     role: () => faker.helpers.arrayElement(["admin", "moderator", "user"]),
     isActive: faker.datatype.boolean,
     createdAt: faker.date.past,
