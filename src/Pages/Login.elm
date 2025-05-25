@@ -11,7 +11,6 @@ import Form.FieldView as FieldView
 import Form.Validation as Validation
 import Html
 import Html.Attributes as Attributes
-import Http.DetailedError
 import Loadable
 import Page exposing (Page)
 import Result.Extra
@@ -202,5 +201,15 @@ loginForm errors =
         }
     )
         |> Form.form
-        |> Form.field "username" (Field.text |> Field.email |> Field.required "Required")
-        |> Form.field "password" (Field.text |> Field.password |> Field.required "Required")
+        |> Form.field "username"
+            (Field.text
+                |> Field.email
+                |> Field.withInitialValue (\_ -> "testuser")
+                |> Field.required "Required"
+            )
+        |> Form.field "password"
+            (Field.text
+                |> Field.password
+                |> Field.withInitialValue (\_ -> "test123")
+                |> Field.required "Required"
+            )

@@ -7,6 +7,7 @@ import Auth.Credentials as Credentials exposing (Credentials)
 import Auth.User as User
 import Components.Button as Button
 import Components.Icon as Icon
+import Components.Icon.Path as Path
 import Components.LocaleTime as LocaleTime
 import Effect exposing (Effect)
 import Html
@@ -110,7 +111,7 @@ view props shared currentRoute { toContentMsg, content } =
                             |> Button.withOnClick UserClickedRenew
                             |> Button.withSizeSmall
                             |> Button.withVariantSecondary
-                            |> Button.withTrailingIcon Icon.arrowPath
+                            |> Button.withTrailingIcon Path.arrowPath
                             |> Button.withLoading (Loadable.isLoading shared.credentials)
                             |> Button.withText "Renew"
                             |> Button.toHtml
@@ -118,7 +119,7 @@ view props shared currentRoute { toContentMsg, content } =
                             |> Button.withOnClick UserClickedLogOut
                             |> Button.withSizeSmall
                             |> Button.withVariantSecondary
-                            |> Button.withTrailingIcon Icon.arrowRightStartOnRectanglePath
+                            |> Button.withTrailingIcon Path.arrowRightStartOnRectangle
                             |> Button.withLoading (Loadable.isLoading shared.logout)
                             |> Button.withText "Log out"
                             |> Button.toHtml

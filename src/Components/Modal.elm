@@ -11,6 +11,7 @@ opened via `dialog.showModal()`).
 
 import Components.Button as Button
 import Components.Icon as Icon
+import Components.Icon.Path as Path
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
@@ -97,7 +98,7 @@ defaultHeader : Html msg
 defaultHeader =
     Html.form [ Attributes.class "grid justify-end", Attributes.method "dialog" ]
         [ Button.new
-            |> Button.withVariantIconOnly Icon.x "Close"
+            |> Button.withVariantIconOnly Path.xMark "Close"
             |> Button.withAttrs [ Attributes.autofocus True ]
             |> Button.toHtml
         ]

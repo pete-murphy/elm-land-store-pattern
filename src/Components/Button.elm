@@ -31,6 +31,7 @@ module Components.Button exposing
 
 import Accessibility.Aria as Aria
 import Components.Icon as Icon
+import Components.Icon.Path exposing (Path)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
@@ -45,8 +46,8 @@ type Button msg r
         , loading : Bool
         , variant : Variant
         , size : Size
-        , leadingIcon : Maybe Icon.Path
-        , trailingIcon : Maybe Icon.Path
+        , leadingIcon : Maybe Path
+        , trailingIcon : Maybe Path
         , children : List (Html msg)
         }
 
@@ -54,7 +55,7 @@ type Button msg r
 type Variant
     = Primary
     | Secondary
-    | IconOnly { icon : Icon.Path, label : String }
+    | IconOnly { icon : Path, label : String }
 
 
 type Size
@@ -86,12 +87,12 @@ withAttrs attrs (Settings settings) =
     Settings { settings | attrs = attrs }
 
 
-withLeadingIcon : Icon.Path -> Button msg { r | lacksIcon : () } -> Button msg { r | hasIcon : () }
+withLeadingIcon : Path -> Button msg { r | lacksIcon : () } -> Button msg { r | hasIcon : () }
 withLeadingIcon icon (Settings settings) =
     Settings { settings | leadingIcon = Just icon }
 
 
-withTrailingIcon : Icon.Path -> Button msg { r | lacksIcon : () } -> Button msg { r | hasIcon : () }
+withTrailingIcon : Path -> Button msg { r | lacksIcon : () } -> Button msg { r | hasIcon : () }
 withTrailingIcon icon (Settings settings) =
     Settings { settings | trailingIcon = Just icon }
 
@@ -106,7 +107,7 @@ withVariantSecondary (Settings settings) =
     Settings { settings | variant = Secondary }
 
 
-withVariantIconOnly : Icon.Path -> String -> Button msg { r | lacksIcon : (), lacksChildren : () } -> Button msg { r | hasIcon : (), hasChildren : () }
+withVariantIconOnly : Path -> String -> Button msg { r | lacksIcon : (), lacksChildren : () } -> Button msg { r | hasIcon : (), hasChildren : () }
 withVariantIconOnly icon label (Settings settings) =
     Settings { settings | variant = IconOnly { icon = icon, label = label } }
 
