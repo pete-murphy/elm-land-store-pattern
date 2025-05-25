@@ -4,6 +4,7 @@ import Api.Post exposing (Post, Preview)
 import Auth
 import Auth.Credentials exposing (Credentials)
 import Components.Button as Button
+import Components.ErrorSummary as ErrorSummary
 import Components.Modal as Modal
 import CustomElements
 import Dict exposing (Dict)
@@ -335,6 +336,7 @@ viewCreatePostModal model =
         }
         [ Html.h2 [ Attributes.class "mb-4 text-xl font-bold" ]
             [ Html.text "Create New Post" ]
+        , ErrorSummary.view { formErrors = model.formErrors, maybeError = Loadable.toMaybeError model.newPost }
         , Html.div [ Attributes.class "mb-4" ]
             [ createPostForm model.formErrors
                 |> Form.renderHtml
@@ -342,7 +344,7 @@ viewCreatePostModal model =
                     , state = model.formModel
                     , toMsg = FormMsg
                     }
-                    (Form.options "new-entry-form"
+                    (Form.options "new-post-form"
                         |> Form.withOnSubmit
                             (.parsed >> UserSubmittedCreatePostForm)
                     )

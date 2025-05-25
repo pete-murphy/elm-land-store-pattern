@@ -2,6 +2,7 @@ module Pages.Login exposing (Model, Msg, page)
 
 import Api.Auth exposing (LoginRequest)
 import Components.Button as Button
+import Components.ErrorSummary as ErrorSummary
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Form
@@ -112,42 +113,7 @@ view shared model =
                 [ Html.h1
                     [ Attributes.class "mb-4 text-2xl font-bold" ]
                     [ Html.text "Login" ]
-                , case ( Dict.isEmpty model.errors, Loadable.value shared.credentials ) of
-                    ( _, Loadable.Failure err ) ->
-                        Html.output
-                            [ Attributes.class "block p-4 mb-4 bg-red-50 rounded-xl border-2 border-red-500 border-solid" ]
-                            [ Html.h2 [ Attributes.class "text-lg font-bold" ] [ Html.text "There is a problem" ]
-                            , Html.text (Http.DetailedError.toString err)
-                            ]
-
-                    ( False, _ ) ->
-                        Html.output
-                            [ Attributes.class "block p-4 mb-4 bg-red-50 rounded-xl border-2 border-red-500 border-solid" ]
-                            [ Html.h2 [ Attributes.class "text-lg font-bold" ] [ Html.text "There is a problem" ]
-                            , Html.ul
-                                [ Attributes.class "list-disc list-inside text-red-700" ]
-                                (Dict.toList model.errors
-                                    |> List.map
-                                        (\( key, errors ) ->
-                                            case errors of
-                                                [] ->
-                                                    Html.text ""
-
-                                                error :: _ ->
-                                                    Html.li
-                                                        [ Attributes.class "text-sm" ]
-                                                        [ Html.a
-                                                            [ Attributes.href ("#" ++ key)
-                                                            , Attributes.target "_self"
-                                                            ]
-                                                            [ Html.text (key ++ ": " ++ error) ]
-                                                        ]
-                                        )
-                                )
-                            ]
-
-                    _ ->
-                        Html.text ""
+                , ErrorSummary.view { formErrors = model.errors, maybeError = Loadable.toMaybeError shared.credentials }
                 , loginForm model.errors
                     |> Form.renderHtml
                         { submitting = Loadable.isLoading shared.credentials
