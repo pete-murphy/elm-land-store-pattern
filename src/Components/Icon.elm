@@ -37,11 +37,15 @@ view size attrs iconPath =
          ]
             ++ attrs
         )
-        [ Svg.path
-            [ Attributes.fillRule "evenodd"
-            , Attributes.clipRule "evenodd"
-            , Attributes.fill "currentColor"
-            , Attributes.d path
-            ]
-            []
-        ]
+        (path
+            |> List.map
+                (\d ->
+                    Svg.path
+                        [ Attributes.fillRule "evenodd"
+                        , Attributes.clipRule "evenodd"
+                        , Attributes.fill "currentColor"
+                        , Attributes.d d
+                        ]
+                        []
+                )
+        )

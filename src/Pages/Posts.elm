@@ -222,21 +222,20 @@ createPostForm errors =
                 |> Validation.andMap title
                 |> Validation.andMap content
                 |> Validation.andMap excerpt
-                |> Validation.andMap
-                    (status
-                        |> Validation.andThen
-                            (\statusString ->
-                                case statusString of
-                                    "draft" ->
-                                        Validation.succeed Api.Post.Draft
+                |> Validation.andMap status
 
-                                    "published" ->
-                                        Validation.succeed Api.Post.Published
-
-                                    _ ->
-                                        Validation.fail "Invalid status" status
-                            )
-                    )
+        -- (status
+        --     |> Validation.andThen
+        --         (\statusString ->
+        --             case statusString of
+        --                 "draft" ->
+        --                     Validation.succeed Api.Post.Draft
+        --                 "published" ->
+        --                     Validation.succeed Api.Post.Published
+        --                 _ ->
+        --                     Validation.fail "Invalid status" status
+        --         )
+        -- )
         , view =
             \context ->
                 let
@@ -272,9 +271,25 @@ createPostForm errors =
                             ]
                 in
                 [ fieldView "Title" title []
-                , fieldView "Content" content []
-                , fieldView "Excerpt" excerpt []
-                , fieldView "Status" status []
+                , fieldView "Content" content [ Attributes.class "field-sizing-content min-h-[4.5rlh]" ]
+                , fieldView "Excerpt" excerpt [ Attributes.class "field-sizing-content min-h-[4.5rlh]" ]
+
+                -- [ FieldView.select []
+                --         (\entry -> ( [], sizeToString entry ))
+                --         size
+                --     ]
+                , Html.div [ Attributes.class "grid relative gap-1" ]
+                    [ FieldView.radio []
+                        (\status_ toRadio ->
+                            Html.div []
+                                [ Html.label [ Attributes.class "flex gap-2 items-center" ]
+                                    [ toRadio []
+                                    , Html.text (Api.Post.statusToString status_)
+                                    ]
+                                ]
+                        )
+                        status
+                    ]
                 , Button.new
                     |> Button.withLoading context.submitting
                     |> Button.withChildren [ Html.text "Create" ]
@@ -297,9 +312,10 @@ createPostForm errors =
                 |> Field.textarea { cols = Nothing, rows = Nothing }
             )
         |> Form.field "status"
-            (Field.text
-                |> Field.withInitialValue (\_ -> "draft")
+            (Field.select [ ( "draft", Api.Post.Draft ), ( "published", Api.Post.Published ) ]
+                (\_ -> "Invalid")
                 |> Field.required "Status is required"
+                |> Field.withInitialValue (\_ -> Api.Post.Published)
             )
 
 

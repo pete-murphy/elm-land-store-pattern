@@ -21,6 +21,7 @@ import Route exposing (Route)
 import Route.Path
 import Shared
 import Shared.Model
+import Svg.Attributes
 import Time
 import View exposing (View)
 
@@ -194,7 +195,7 @@ viewNav currentRoute =
     let
         navLink path =
             Html.a
-                (Attributes.class "relative p-2 font-semibold rounded-md active:transition aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:transition-all before:h-4 before:bg-gray-800/0 before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 hover:not-aria-[current=page]:before:bg-gray-800/25 hover:before:h-[calc(100%-0.5rem)]"
+                (Attributes.class "relative p-2 font-semibold rounded-md active:transition aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:transition-all before:h-4 before:bg-gray-800/0 before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 hover:not-aria-[current=page]:before:bg-gray-800/25 hover:before:h-[calc(100%-0.5rem)] flex items-center gap-2"
                     :: (if path == currentRoute.path then
                             [ Aria.currentPage ]
 
@@ -205,14 +206,14 @@ viewNav currentRoute =
     in
     Html.nav [ Attributes.class "px-2" ]
         [ Html.ul [ Attributes.class "grid gap-4" ]
-            ([ ( Route.Path.Home_, "Home" )
-             , ( Route.Path.Posts, "Posts" )
-             , ( Route.Path.Users, "Users" )
+            ([ ( Path.home, Route.Path.Home_, "Home" )
+             , ( Path.rectangleStack, Route.Path.Posts, "Posts" )
+             , ( Path.user, Route.Path.Users, "Users" )
              ]
                 |> List.map
-                    (\( path, text ) ->
-                        Html.li []
-                            [ navLink path [ Html.text text ]
+                    (\( iconPath, path, text ) ->
+                        Html.li [ Attributes.class "group" ]
+                            [ navLink path [ Icon.view Icon.Regular [ Svg.Attributes.class "text-gray-400 group-hover:text-gray-600 transition group-has-aria-[current=page]:text-gray-800" ] iconPath, Html.text text ]
                             ]
                     )
             )

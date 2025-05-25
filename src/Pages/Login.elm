@@ -107,8 +107,8 @@ view shared model =
     { title = "Login"
     , body =
         [ Html.div
-            [ Attributes.class "grid place-items-center bg-gray-100 h-dvh" ]
-            [ Html.main_ [ Attributes.class "p-8 w-full max-w-md bg-white rounded-xl shadow-lg outline-2 outline-gray-200/50" ]
+            [ Attributes.class "grid place-items-center h-dvh" ]
+            [ Html.main_ [ Attributes.class "p-8 w-full max-w-md" ]
                 [ Html.h1
                     [ Attributes.class "mb-4 text-2xl font-bold" ]
                     [ Html.text "Login" ]
