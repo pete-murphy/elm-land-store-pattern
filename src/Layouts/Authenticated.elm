@@ -101,9 +101,9 @@ view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
         [ Html.div [ Attributes.class "grid mx-auto max-w-3xl grid-cols-[auto_1fr]" ]
-            [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-4 h-dvh" ]
+            [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-8 h-dvh" ]
                 ([ viewNav currentRoute
-                 , Html.div [ Attributes.class "self-end" ]
+                 , Html.div [ Attributes.class "grid gap-8 self-end" ]
                     [ viewUserInfo props.user.credentials
                     , Html.div [ Attributes.class "flex gap-2" ]
                         [ Button.new
@@ -127,13 +127,13 @@ view props shared currentRoute { toContentMsg, content } =
                  ]
                     |> List.map (Html.map toContentMsg)
                 )
-            , Html.div []
-                [ Html.header [ Attributes.class "p-4" ]
+            , Html.div [ Attributes.class "flex flex-col gap-8 p-8" ]
+                [ Html.header []
                     [ Html.h1
                         [ Attributes.class "text-2xl font-bold" ]
                         [ Html.text content.title ]
                     ]
-                , Html.main_ [ Attributes.class "p-4" ] content.body
+                , Html.main_ [] content.body
                 ]
             ]
         ]
@@ -153,7 +153,7 @@ viewUserInfo credentials =
     in
     case infoFromUser of
         Ok ( expiresAt, issuedAt ) ->
-            Html.dl [ Attributes.class "grid gap-3 p-2 text-sm" ]
+            Html.dl [ Attributes.class "grid gap-3 px-2 text-sm" ]
                 (let
                     user =
                         Credentials.user credentials
@@ -202,7 +202,7 @@ viewNav currentRoute =
                        )
                 )
     in
-    Html.nav [ Attributes.class "p-2" ]
+    Html.nav [ Attributes.class "px-2" ]
         [ Html.ul [ Attributes.class "grid gap-4" ]
             ([ ( Route.Path.Home_, "Home" )
              , ( Route.Path.Posts, "Posts" )

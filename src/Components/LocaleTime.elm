@@ -116,7 +116,7 @@ defaultLocaleAttrs =
 
 defaultRelativeAttrs : List (Html.Attribute msg)
 defaultRelativeAttrs =
-    [ Attributes.class "text-sm text-gray-500" ]
+    [ Attributes.class "text-sm text-gray-600" ]
 
 
 

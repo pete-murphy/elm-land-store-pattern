@@ -112,7 +112,7 @@ view model =
             { title = "Error"
             , body =
                 [ Html.div [ Attributes.class "p-4 bg-red-50 rounded-md" ]
-                    [ Html.h2 [ Attributes.class "text-lg font-semibold text-red-800 mb-2" ]
+                    [ Html.h2 [ Attributes.class "mb-2 text-lg font-semibold text-red-800" ]
                         [ Html.text "Error loading post" ]
                     , Html.p [ Attributes.class "text-red-700" ]
                         [ Html.text (Http.DetailedError.toString error) ]
@@ -130,14 +130,14 @@ viewPost : Post Api.Post.Details -> Html Msg
 viewPost post =
     Html.article [ Attributes.class "flex flex-col gap-6" ]
         [ Html.header []
-            [ Html.div [ Attributes.class "flex gap-2 items-center text-sm text-gray-600 mb-4" ]
+            [ Html.div [ Attributes.class "flex gap-2 items-center mb-4 text-sm text-gray-600" ]
                 [ Html.text ("by " ++ username (Api.Post.author post))
                 , Html.text " • "
                 , Html.text (Api.Post.statusToString (Api.Post.status post))
                 , Html.text " • "
                 , Html.text (String.fromInt (Api.Post.viewCount post) ++ " views")
                 ]
-            , Html.div [ Attributes.class "flex gap-1 text-sm text-gray-500 mb-6" ]
+            , Html.div [ Attributes.class "flex gap-1 mb-6 text-sm text-gray-600" ]
                 (LocaleTime.new (Api.Post.createdAt post)
                     |> LocaleTime.withTimeStyle Nothing
                     |> LocaleTime.withLocaleAttrs []
@@ -146,10 +146,10 @@ viewPost post =
                     |> List.intersperse (Html.text " • ")
                 )
             ]
-        , Html.div [ Attributes.class "prose max-w-none" ]
-            [ Html.p [ Attributes.class "text-lg text-gray-700 mb-6" ]
+        , Html.div [ Attributes.class "max-w-none prose" ]
+            [ Html.p [ Attributes.class "mb-6 text-lg text-gray-600" ]
                 [ Html.text (Api.Post.excerpt post) ]
-            , Html.div [ Attributes.class "whitespace-pre-wrap text-gray-900" ]
+            , Html.div [ Attributes.class "text-gray-900 whitespace-pre-wrap" ]
                 [ Html.text (Api.Post.content post) ]
             ]
         , Html.footer []
@@ -158,7 +158,7 @@ viewPost post =
 
               else
                 Html.div [ Attributes.class "pt-6 border-t border-gray-200" ]
-                    [ Html.h3 [ Attributes.class "text-sm font-semibold text-gray-600 mb-3" ]
+                    [ Html.h3 [ Attributes.class "mb-3 text-sm font-semibold text-gray-600" ]
                         [ Html.text "Tags" ]
                     , Tag.viewList (Api.Post.tags post)
                     ]
@@ -170,12 +170,12 @@ viewSkeletonContent : Html msg
 viewSkeletonContent =
     Html.div [ Attributes.class "flex flex-col gap-6" ]
         [ Html.div [ Attributes.class "animate-pulse" ]
-            [ Html.div [ Attributes.class "h-8 bg-gray-200 rounded mb-4" ] []
-            , Html.div [ Attributes.class "h-4 bg-gray-200 rounded mb-2 w-1/2" ] []
-            , Html.div [ Attributes.class "h-4 bg-gray-200 rounded mb-6 w-1/3" ] []
-            , Html.div [ Attributes.class "h-4 bg-gray-200 rounded mb-2" ] []
-            , Html.div [ Attributes.class "h-4 bg-gray-200 rounded mb-2" ] []
-            , Html.div [ Attributes.class "h-4 bg-gray-200 rounded mb-2 w-3/4" ] []
+            [ Html.div [ Attributes.class "mb-4 h-8 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-2 w-1/2 h-4 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-6 w-1/3 h-4 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-2 h-4 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-2 h-4 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-2 w-3/4 h-4 bg-gray-200 rounded" ] []
             ]
         ]
 

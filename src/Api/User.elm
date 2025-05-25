@@ -172,7 +172,7 @@ viewPreview (User internals _) =
         , Html.div [ Html.Attributes.class "flex-1" ]
             [ Html.div [ Html.Attributes.class "font-medium" ]
                 [ Html.text (internals.firstName ++ " " ++ internals.lastName) ]
-            , Html.div [ Html.Attributes.class "text-sm text-gray-500" ]
+            , Html.div [ Html.Attributes.class "text-sm text-gray-600" ]
                 [ Html.text ("@" ++ internals.username) ]
             ]
         ]

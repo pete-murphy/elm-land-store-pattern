@@ -289,7 +289,7 @@ viewPreview (Post internals _) =
                 [ Html.h3 [ Html.Attributes.class "mb-1 text-lg font-semibold" ]
                     [ Html.a
                         [ Route.Path.href (Route.Path.Posts_Slug_ { slug = internals.slug })
-                        , Html.Attributes.class "underline hover:no-underline underline-offset-2"
+                        , Html.Attributes.class "underline underline-offset-2 decoration-2"
                         ]
                         [ Html.text internals.title ]
                     ]
@@ -302,7 +302,7 @@ viewPreview (Post internals _) =
                     ]
                 ]
             ]
-        , Html.p [ Html.Attributes.class "mb-3 text-gray-700" ]
+        , Html.p [ Html.Attributes.class "mb-3 text-gray-600" ]
             [ Html.text internals.excerpt ]
         , Html.footer [ Html.Attributes.class "flex justify-between items-center" ]
             [ if List.isEmpty internals.tags then
@@ -310,7 +310,7 @@ viewPreview (Post internals _) =
 
               else
                 Tag.viewList internals.tags
-            , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-500 text-end text-nowrap line-clamp-1" ]
+            , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-600 text-end text-nowrap line-clamp-1" ]
                 (LocaleTime.new internals.createdAt
                     |> LocaleTime.withTimeStyle Nothing
                     |> LocaleTime.withLocaleAttrs []
