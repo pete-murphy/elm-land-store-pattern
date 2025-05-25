@@ -1,6 +1,6 @@
-module Pages.Posts exposing (Model, Msg, page)
+module Pages.Users exposing (Model, Msg, page)
 
-import Api.Post exposing (Post, Preview)
+import Api.User exposing (Preview, User)
 import Auth
 import Auth.Credentials exposing (Credentials)
 import CustomElements
@@ -42,18 +42,18 @@ type alias Data a =
 
 
 type alias Model =
-    { posts : Data (Paginated (Post Preview))
+    { users : Data (Paginated (User Preview))
     , credentials : Credentials
     }
 
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
 init user _ _ =
-    ( { posts = Loadable.loading
+    ( { users = Loadable.loading
       , credentials = user.credentials
       }
-    , Effect.request (Api.Post.list user.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
-        BackendRespondedToGetPosts
+    , Effect.request (Api.User.list user.credentials { page = 1, limit = 10 })
+        BackendRespondedToGetUsers
     )
 
 
@@ -66,7 +66,7 @@ type alias ApiResult a =
 
 
 type Msg
-    = BackendRespondedToGetPosts (ApiResult (Paginated (Post Preview)))
+    = BackendRespondedToGetUsers (ApiResult (Paginated (User Preview)))
     | UserScrolledToBottom
     | NoOp
 
@@ -74,16 +74,16 @@ type Msg
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        BackendRespondedToGetPosts result ->
+        BackendRespondedToGetUsers result ->
             ( { model
-                | posts =
-                    case Loadable.value model.posts of
+                | users =
+                    case Loadable.value model.users of
                         Loadable.Empty ->
                             Loadable.fromResult result
 
                         _ ->
                             Loadable.succeed Paginated.merge
-                                |> Loadable.andMap model.posts
+                                |> Loadable.andMap model.users
                                 |> Loadable.andMap (Loadable.fromResult result)
                                 |> Loadable.toNotLoading
               }
@@ -91,19 +91,17 @@ update msg model =
             )
 
         UserScrolledToBottom ->
-            case Loadable.value model.posts of
-                Loadable.Success paginatedPosts ->
-                    if paginatedPosts.pagination.hasNextPage then
-                        ( { model | posts = Loadable.toLoading model.posts }
+            case Loadable.value model.users of
+                Loadable.Success paginatedUsers ->
+                    if paginatedUsers.pagination.hasNextPage then
+                        ( { model | users = Loadable.toLoading model.users }
                         , Effect.request
-                            (Api.Post.list model.credentials
-                                { page = paginatedPosts.pagination.page + 1
-                                , limit = paginatedPosts.pagination.limit
-                                , status = Nothing
-                                , search = Nothing
+                            (Api.User.list model.credentials
+                                { page = paginatedUsers.pagination.page + 1
+                                , limit = paginatedUsers.pagination.limit
                                 }
                             )
-                            BackendRespondedToGetPosts
+                            BackendRespondedToGetUsers
                         )
 
                     else
@@ -131,18 +129,18 @@ subscriptions _ =
 
 view : Model -> View Msg
 view model =
-    { title = "Posts"
+    { title = "Users"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
-            [ viewPostsSection model.posts
+            [ viewUsersSection model.users
             ]
         ]
     }
 
 
-viewPostsSection : Data (Paginated (Post Preview)) -> Html Msg
-viewPostsSection postsData =
-    case Loadable.value postsData of
+viewUsersSection : Data (Paginated (User Preview)) -> Html Msg
+viewUsersSection usersData =
+    case Loadable.value usersData of
         Loadable.Empty ->
             viewSkeletonContent
 
@@ -150,14 +148,14 @@ viewPostsSection postsData =
             -- TODO: Show error properly
             Html.text (Debug.toString error)
 
-        Loadable.Success paginatedPosts ->
+        Loadable.Success paginatedUsers ->
             Html.div [ Attributes.class "flex flex-col gap-4" ]
-                [ Api.Post.viewPreviewList paginatedPosts.data
+                [ Api.User.viewPreviewList paginatedUsers.data
                 , CustomElements.intersectionSentinel
                     { onIntersect = UserScrolledToBottom
-                    , disabled = Loadable.isLoading postsData
+                    , disabled = Loadable.isLoading usersData
                     }
-                , if Loadable.isLoading postsData then
+                , if Loadable.isLoading usersData then
                     viewSkeletonContent
 
                   else
@@ -169,7 +167,7 @@ viewSkeletonContent : Html msg
 viewSkeletonContent =
     Html.div [ Attributes.class "flex flex-col gap-6" ]
         (List.repeat 4
-            (Html.div [ Attributes.class "bg-gray-100 rounded-md min-h-40 animate-pulse" ]
+            (Html.div [ Attributes.class "bg-gray-100 rounded-md min-h-20 animate-pulse" ]
                 []
             )
         )

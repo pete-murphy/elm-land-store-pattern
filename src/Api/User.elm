@@ -10,6 +10,7 @@ import Iso8601
 import Json.Decode exposing (Decoder)
 import Json.Decode.Pipeline
 import Paginated exposing (Paginated)
+import Route.Path
 import Time exposing (Posix)
 import Url.Builder
 
@@ -150,6 +151,78 @@ get credentials userId =
     }
 
 
+getById :
+    Credentials
+    -> UserId
+    -> Request (User Details)
+getById credentials userId =
+    get credentials (UserId.toString userId)
+
+
+
+-- GETTERS
+
+
+id : User a -> UserId
+id (User internals _) =
+    internals.id
+
+
+firstName : User a -> String
+firstName (User internals _) =
+    internals.firstName
+
+
+lastName : User a -> String
+lastName (User internals _) =
+    internals.lastName
+
+
+username : User a -> String
+username (User internals _) =
+    internals.username
+
+
+fullName : User a -> String
+fullName (User internals _) =
+    internals.firstName ++ " " ++ internals.lastName
+
+
+avatarUrl : User a -> String
+avatarUrl (User internals _) =
+    internals.avatarUrl
+
+
+role : User a -> Role
+role (User internals _) =
+    internals.role
+
+
+bio : User Details -> Maybe String
+bio (User _ details) =
+    details.bio
+
+
+email : User Details -> String
+email (User _ details) =
+    details.email
+
+
+isActive : User Details -> Bool
+isActive (User _ details) =
+    details.isActive
+
+
+createdAt : User Details -> Posix
+createdAt (User _ details) =
+    details.createdAt
+
+
+updatedAt : User Details -> Posix
+updatedAt (User _ details) =
+    details.updatedAt
+
+
 
 -- HTML
 
@@ -162,11 +235,12 @@ viewPreviewList users =
 
 viewPreview : User Preview -> Html msg
 viewPreview (User internals _) =
-    Html.div
-        [ Html.Attributes.class "flex gap-3 items-center" ]
+    Html.a
+        [ Route.Path.href (Route.Path.Users_UserId_ { userId = UserId.toString internals.id })
+        , Html.Attributes.class "flex gap-3 items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+        ]
         [ Html.img ""
-            [ Html.Attributes.alt (internals.firstName ++ " " ++ internals.lastName)
-            , Html.Attributes.class "w-10 h-10 rounded-full"
+            [ Html.Attributes.class "w-10 h-10 rounded-full"
             , Html.Attributes.src internals.avatarUrl
             ]
         , Html.div [ Html.Attributes.class "flex-1" ]
@@ -179,8 +253,8 @@ viewPreview (User internals _) =
 
 
 roleToString : Role -> String
-roleToString role =
-    case role of
+roleToString userRole =
+    case userRole of
         Admin ->
             "Admin"
 
