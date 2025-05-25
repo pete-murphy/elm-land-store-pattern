@@ -29,6 +29,7 @@ module Api.Post exposing
     )
 
 import Accessibility as Html exposing (Html)
+import Api.Slug as Slug exposing (Slug)
 import Api.Tag as Tag exposing (Tag)
 import Api.User as User exposing (User)
 import Auth.Credentials as Credentials exposing (Credentials)
@@ -41,6 +42,7 @@ import Json.Decode exposing (Decoder)
 import Json.Decode.Pipeline
 import Json.Encode as Encode
 import Paginated exposing (Paginated)
+import Route.Path
 import Time exposing (Posix)
 import Url.Builder
 
@@ -172,12 +174,12 @@ list credentials params =
 
 get :
     Credentials
-    -> String
+    -> Slug
     -> Request (Post Details)
-get credentials postId =
+get credentials slug_ =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts", postId ] []
+    , url = Url.Builder.absolute [ "api", "posts", "slug", Slug.toString slug_ ] []
     , body = Http.emptyBody
     , decoder = detailsDecoder
     }
@@ -285,7 +287,12 @@ viewPreview (Post internals _) =
         [ Html.header [ Html.Attributes.class "flex gap-4 justify-between items-start mb-3" ]
             [ Html.div [ Html.Attributes.class "flex-1" ]
                 [ Html.h3 [ Html.Attributes.class "mb-1 text-lg font-semibold" ]
-                    [ Html.text internals.title ]
+                    [ Html.a
+                        [ Route.Path.href (Route.Path.Posts_Slug_ { slug = internals.slug })
+                        , Html.Attributes.class "underline hover:no-underline underline-offset-2"
+                        ]
+                        [ Html.text internals.title ]
+                    ]
                 , Html.div [ Html.Attributes.class "flex gap-2 items-center text-sm text-gray-600" ]
                     [ Html.text ("by " ++ username internals.author)
                     , Html.text " • "
