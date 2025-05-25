@@ -1,11 +1,9 @@
 module Pages.Posts exposing (Model, Msg, page)
 
-import Accessibility.Aria as Aria
 import Api.Post exposing (Post, Preview)
 import Auth
 import Auth.Credentials exposing (Credentials)
 import Components.Button as Button
-import Components.Icon as Icon
 import Components.Modal as Modal
 import CustomElements
 import Dict exposing (Dict)
@@ -16,7 +14,6 @@ import Form.FieldView as FieldView
 import Form.Validation as Validation
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Html.Events as Events
 import Http.DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
@@ -24,7 +21,6 @@ import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
-import Svg.Attributes
 import View exposing (View)
 
 
@@ -319,8 +315,7 @@ view model =
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
             [ Html.div [ Attributes.class "flex justify-between items-center" ]
-                [ Html.h1 [ Attributes.class "text-2xl font-bold" ] [ Html.text "Posts" ]
-                , Button.new
+                [ Button.new
                     |> Button.withText "Create Post"
                     |> Button.withOnClick UserClickedCreatePost
                     |> Button.toHtml
