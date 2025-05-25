@@ -3,7 +3,7 @@ module Layouts.Authenticated exposing (Model, Msg, Props, layout)
 import Accessibility.Aria as Aria
 import Auth
 import Auth.AccessToken as AccessToken
-import Auth.Credentials as Credentials
+import Auth.Credentials as Credentials exposing (Credentials)
 import Auth.User as User
 import Components.Button as Button
 import Components.Icon as Icon
@@ -100,103 +100,32 @@ view :
 view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
-        let
-            accessToken =
-                Credentials.accessToken props.user.credentials
-
-            infoFromUser =
-                Ok Tuple.pair
-                    |> Result.Extra.andMap (AccessToken.expiresAt accessToken)
-                    |> Result.Extra.andMap (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
-        in
-        [ Html.div [ Attributes.class "grid mx-auto max-w-3xl h-dvh grid-cols-[auto_1fr]" ]
-            [ Html.aside [ Attributes.class "sticky top-0 left-0 p-4 h-fit" ]
-                ((let
-                    navLink path =
-                        Html.a
-                            (Attributes.class "font-semibold"
-                                :: (if path == currentRoute.path then
-                                        [ Aria.currentPage ]
-
-                                    else
-                                        [ Route.Path.href path ]
-                                   )
-                            )
-                  in
-                  Html.nav [ Attributes.class "p-2" ]
-                    [ Html.ul [ Attributes.class "flex gap-4" ]
-                        ([ ( Route.Path.Home_, "Home" )
-                         ]
-                            |> List.map
-                                (\( path, text ) ->
-                                    Html.li []
-                                        [ navLink path [ Html.text text ]
-                                        ]
-                                )
-                        )
+        [ Html.div [ Attributes.class "grid mx-auto max-w-3xl grid-cols-[auto_1fr]" ]
+            [ Html.aside [ Attributes.class "sticky grid top-0 left-0 p-4 h-dvh" ]
+                ([ viewNav currentRoute
+                 , Html.div [ Attributes.class "self-end" ]
+                    [ viewUserInfo props.user.credentials
+                    , Html.div [ Attributes.class "flex gap-2" ]
+                        [ Button.new
+                            |> Button.withOnClick UserClickedRenew
+                            |> Button.withSizeSmall
+                            |> Button.withVariantSecondary
+                            |> Button.withTrailingIcon Icon.arrowPath
+                            |> Button.withLoading (Loadable.isLoading shared.credentials)
+                            |> Button.withText "Renew"
+                            |> Button.toHtml
+                        , Button.new
+                            |> Button.withOnClick UserClickedLogOut
+                            |> Button.withSizeSmall
+                            |> Button.withVariantSecondary
+                            |> Button.withTrailingIcon Icon.arrowRightStartOnRectanglePath
+                            |> Button.withLoading (Loadable.isLoading shared.logout)
+                            |> Button.withText "Log out"
+                            |> Button.toHtml
+                        ]
                     ]
-                 )
-                    :: (case infoFromUser of
-                            Ok ( expiresAt, issuedAt ) ->
-                                let
-                                    expMillis =
-                                        Time.millisToPosix (expiresAt * 1000)
-
-                                    iatMillis =
-                                        Time.millisToPosix (issuedAt * 1000)
-
-                                    user =
-                                        Credentials.user props.user.credentials
-                                in
-                                [ Html.dl [ Attributes.class "grid gap-3 p-2 text-sm" ]
-                                    (let
-                                        displayTime posix =
-                                            LocaleTime.new posix
-                                                |> LocaleTime.withRelativeAttrs [ Attributes.class "text-xs" ]
-                                                |> LocaleTime.toHtml
-                                                |> Html.div [ Attributes.class "grid" ]
-
-                                        defs =
-                                            [ ( "Logged in", Html.text (User.username user ++ " (" ++ User.email user ++ ")") )
-                                            , ( "Issued", displayTime iatMillis )
-                                            , ( "Expires", displayTime expMillis )
-                                            ]
-                                     in
-                                     defs
-                                        |> List.map
-                                            (\( label, value ) ->
-                                                Html.div [ Attributes.class "grid" ]
-                                                    [ Html.dd [ Attributes.class "text-sm font-semibold" ]
-                                                        [ Html.text label ]
-                                                    , Html.dt [ Attributes.class "max-w-prose line-clamp-1" ] [ value ]
-                                                    ]
-                                            )
-                                    )
-                                , Button.new
-                                    |> Button.withOnClick (toContentMsg UserClickedRenew)
-                                    |> Button.withSizeSmall
-                                    |> Button.withVariantSecondary
-                                    |> Button.withTrailingIcon Icon.arrowPath
-                                    |> Button.withLoading (Loadable.isLoading shared.credentials)
-                                    |> Button.withText "Renew"
-                                    |> Button.toHtml
-                                , Button.new
-                                    |> Button.withOnClick (toContentMsg UserClickedLogOut)
-                                    |> Button.withSizeSmall
-                                    |> Button.withVariantSecondary
-                                    |> Button.withTrailingIcon Icon.arrowRightStartOnRectanglePath
-                                    |> Button.withLoading (Loadable.isLoading shared.logout)
-                                    |> Button.withText "Log out"
-                                    |> Button.toHtml
-                                ]
-
-                            Err err ->
-                                [ Html.div []
-                                    [ Html.text "Error decoding JWT: "
-                                    , Html.text (Jwt.errorToString err)
-                                    ]
-                                ]
-                       )
+                 ]
+                    |> List.map (Html.map toContentMsg)
                 )
             , Html.div []
                 [ Html.header [ Attributes.class "p-4" ]
@@ -209,3 +138,79 @@ view props shared currentRoute { toContentMsg, content } =
             ]
         ]
     }
+
+
+viewUserInfo : Credentials -> Html.Html Msg
+viewUserInfo credentials =
+    let
+        accessToken =
+            Credentials.accessToken credentials
+
+        infoFromUser =
+            Ok Tuple.pair
+                |> Result.Extra.andMap (AccessToken.expiresAt accessToken)
+                |> Result.Extra.andMap (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
+    in
+    case infoFromUser of
+        Ok ( expiresAt, issuedAt ) ->
+            Html.dl [ Attributes.class "grid gap-3 p-2 text-sm" ]
+                (let
+                    user =
+                        Credentials.user credentials
+
+                    displayTime posix =
+                        LocaleTime.new posix
+                            |> LocaleTime.withRelativeAttrs [ Attributes.class "text-xs" ]
+                            |> LocaleTime.toHtml
+                            |> Html.div [ Attributes.class "grid" ]
+
+                    items =
+                        [ ( "Logged in", Html.text (User.username user ++ " (" ++ User.email user ++ ")") )
+                        , ( "Issued", displayTime (Time.millisToPosix (issuedAt * 1000)) )
+                        , ( "Expires", displayTime (Time.millisToPosix (expiresAt * 1000)) )
+                        ]
+                 in
+                 items
+                    |> List.map
+                        (\( label, value ) ->
+                            Html.div [ Attributes.class "grid" ]
+                                [ Html.dd [ Attributes.class "text-sm font-semibold" ]
+                                    [ Html.text label ]
+                                , Html.dt [ Attributes.class "max-w-prose line-clamp-1" ] [ value ]
+                                ]
+                        )
+                )
+
+        Err err ->
+            Html.div []
+                [ Html.text "Error decoding JWT: "
+                , Html.text (Jwt.errorToString err)
+                ]
+
+
+viewNav : Route () -> Html.Html msg
+viewNav currentRoute =
+    let
+        navLink path =
+            Html.a
+                (Attributes.class "font-semibold"
+                    :: (if path == currentRoute.path then
+                            [ Aria.currentPage ]
+
+                        else
+                            [ Route.Path.href path ]
+                       )
+                )
+    in
+    Html.nav [ Attributes.class "p-2" ]
+        [ Html.ul [ Attributes.class "flex gap-4" ]
+            ([ ( Route.Path.Home_, "Home" )
+             ]
+                |> List.map
+                    (\( path, text ) ->
+                        Html.li []
+                            [ navLink path [ Html.text text ]
+                            ]
+                    )
+            )
+        ]
