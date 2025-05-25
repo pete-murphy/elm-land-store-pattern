@@ -42,6 +42,18 @@ export function init() {
 
         const open = this.getAttribute("open") === "true";
         if (open) {
+          // Clear all inputs
+          const inputs = dialog.querySelectorAll("input, textarea, select");
+          for (const input of inputs) {
+            if (input instanceof HTMLInputElement) {
+              input.value = "";
+            } else if (input instanceof HTMLTextAreaElement) {
+              input.value = "";
+            } else if (input instanceof HTMLSelectElement) {
+              input.value = "";
+            }
+          }
+
           dialog.showModal();
         } else {
           dialog.close();

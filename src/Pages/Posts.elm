@@ -52,24 +52,20 @@ type alias Data a =
 type alias Model =
     { posts : Data (Paginated (Post Preview))
     , credentials : Credentials
-    , modalIsOpen : Bool
-    , formModel : Form.Model
-    , formErrors : Dict String (List String)
+    , modal :
+        Maybe
+            { form : Form.Model
+            , errors : Dict String (List String)
+            }
     , newPost : Data ()
     }
-
-
-type alias FormErrors =
-    Dict String (List String)
 
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
 init user _ _ =
     ( { posts = Loadable.loading
       , credentials = user.credentials
-      , modalIsOpen = False
-      , formModel = Form.init
-      , formErrors = Dict.empty
+      , modal = Nothing
       , newPost = Loadable.notAsked
       }
     , Effect.request (Api.Post.list user.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
@@ -102,8 +98,8 @@ update msg model =
         BackendRespondedToGetPosts result ->
             ( { model
                 | posts =
-                    case Loadable.value model.posts of
-                        Loadable.Empty ->
+                    case Result.map (.pagination >> .page) result of
+                        Ok 1 ->
                             Loadable.fromResult result
 
                         _ ->
@@ -119,9 +115,7 @@ update msg model =
             case result of
                 Ok _ ->
                     ( { model
-                        | modalIsOpen = False
-                        , formModel = Form.init
-                        , formErrors = Dict.empty
+                        | modal = Nothing
                         , newPost = Loadable.succeed ()
                         , posts = Loadable.toLoading model.posts
                       }
@@ -158,16 +152,14 @@ update msg model =
 
         UserClickedCreatePost ->
             ( { model
-                | modalIsOpen = True
-                , formErrors = Dict.empty
+                | modal = Just { form = Form.init, errors = Dict.empty }
               }
             , Effect.none
             )
 
         UserClosedModal ->
             ( { model
-                | modalIsOpen = False
-                , formErrors = Dict.empty
+                | modal = Nothing
               }
             , Effect.none
             )
@@ -179,18 +171,23 @@ update msg model =
             )
 
         UserSubmittedCreatePostForm (Form.Invalid _ errors) ->
-            ( { model | formErrors = errors }
+            ( { model | modal = Maybe.map (\modal -> { modal | errors = errors }) model.modal }
             , Effect.none
             )
 
         FormMsg formMsg ->
-            let
-                ( updatedFormModel, cmd ) =
-                    Form.update formMsg model.formModel
-            in
-            ( { model | formModel = updatedFormModel }
-            , Effect.sendCmd cmd
-            )
+            case model.modal of
+                Just modal ->
+                    let
+                        ( updatedForm, cmd ) =
+                            Form.update formMsg modal.form
+                    in
+                    ( { model | modal = Just { modal | form = updatedForm } }
+                    , Effect.sendCmd cmd
+                    )
+
+                _ ->
+                    ( model, Effect.none )
 
         NoOp ->
             ( model, Effect.none )
@@ -330,18 +327,29 @@ view model =
 
 viewCreatePostModal : Model -> Html Msg
 viewCreatePostModal model =
+    let
+        formErrors =
+            model.modal
+                |> Maybe.map .errors
+                |> Maybe.withDefault Dict.empty
+
+        formModel =
+            model.modal
+                |> Maybe.map .form
+                |> Maybe.withDefault Form.init
+    in
     Modal.new
         { onClose = UserClosedModal
-        , open = model.modalIsOpen
+        , open = model.modal /= Nothing
         }
         [ Html.h2 [ Attributes.class "mb-4 text-xl font-bold" ]
             [ Html.text "Create New Post" ]
-        , ErrorSummary.view { formErrors = model.formErrors, maybeError = Loadable.toMaybeError model.newPost }
+        , ErrorSummary.view { formErrors = formErrors, maybeError = Loadable.toMaybeError model.newPost }
         , Html.div [ Attributes.class "mb-4" ]
-            [ createPostForm model.formErrors
+            [ createPostForm formErrors
                 |> Form.renderHtml
                     { submitting = Loadable.isLoading model.newPost
-                    , state = model.formModel
+                    , state = formModel
                     , toMsg = FormMsg
                     }
                     (Form.options "new-post-form"
