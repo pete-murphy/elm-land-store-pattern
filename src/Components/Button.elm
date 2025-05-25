@@ -260,7 +260,7 @@ spinningThreeQuarterCircle attrs =
             [ Svg.Attributes.strokeLinecap "round"
             , Svg.Attributes.strokeWidth "2"
             , Svg.Attributes.stroke "currentColor"
-            , Svg.Attributes.d "M 10 10 m 8, 0 a 8,8 0 1,0 -16,0 a 8,8 0 0,0 8,8"
+            , Svg.Attributes.d "M 12 12 m 10, 0 a 10,10 0 1,0 -20,0 a 10,10 0 0,0 10,10"
             , Svg.Attributes.class "animate-spin origin-center"
             ]
             []

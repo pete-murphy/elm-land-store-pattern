@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { factory, primaryKey, manyOf, oneOf, nullable } from "@mswjs/data";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, delay } from "msw";
 import { SignJWT, jwtVerify } from "jose";
 
 // API Base URL
@@ -307,12 +307,13 @@ const seedData = () => {
 };
 
 // Request handlers
-export const handlers = (apiBase?: string) => {
+export const handlers = (apiBase?: string, delayMs: number = 0) => {
   const API_BASE = apiBase || TEST_API_BASE;
   return [
     // === AUTHENTICATION ENDPOINTS ===
     // Login
     http.post(`${API_BASE}/auth/login`, async ({ request }) => {
+      await delay(delayMs);
       const body = (await request.json()) as any;
       const { username, email, password } = body;
       const usernameOrEmail = username || email;
@@ -393,6 +394,7 @@ export const handlers = (apiBase?: string) => {
 
     // Refresh token
     http.post(`${API_BASE}/auth/refresh`, async ({ request }) => {
+      await delay(delayMs);
       const body = (await request.json()) as any;
       const { refreshToken: oldRefreshTokenValue } = body;
 
@@ -478,6 +480,7 @@ export const handlers = (apiBase?: string) => {
 
     // Logout
     http.post(`${API_BASE}/auth/logout`, async ({ request }) => {
+      await delay(delayMs);
       const body = (await request.json()) as any;
       const { refreshToken: refreshTokenValue } = body;
 
@@ -505,6 +508,7 @@ export const handlers = (apiBase?: string) => {
 
     // Logout from all devices
     http.post(`${API_BASE}/auth/logout-all`, async ({ request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return new HttpResponse(null, { status: 401 });
@@ -529,6 +533,7 @@ export const handlers = (apiBase?: string) => {
 
     // Verify token
     http.get(`${API_BASE}/auth/verify`, async ({ request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json(
@@ -548,6 +553,7 @@ export const handlers = (apiBase?: string) => {
     // === USER ENDPOINTS ===
     // Get current user
     http.get(`${API_BASE}/me`, async ({ request }) => {
+      await delay(delayMs);
       const user = await getCurrentUser(request);
       if (!user) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -557,7 +563,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get all users (paginated)
-    http.get(`${API_BASE}/users`, ({ request }) => {
+    http.get(`${API_BASE}/users`, async ({ request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
       const search = url.searchParams.get("search");
@@ -583,7 +590,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get user by ID
-    http.get(`${API_BASE}/users/:id`, ({ params }) => {
+    http.get(`${API_BASE}/users/:id`, async ({ params }) => {
+      await delay(delayMs);
       const user = db.user.findFirst({
         where: { id: { equals: params.id as string } },
       });
@@ -597,7 +605,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get user's posts
-    http.get(`${API_BASE}/users/:id/posts`, ({ params, request }) => {
+    http.get(`${API_BASE}/users/:id/posts`, async ({ params, request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
       const status = url.searchParams.get("status");
@@ -625,7 +634,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get user's comments
-    http.get(`${API_BASE}/users/:id/comments`, ({ params, request }) => {
+    http.get(`${API_BASE}/users/:id/comments`, async ({ params, request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
 
@@ -653,6 +663,7 @@ export const handlers = (apiBase?: string) => {
 
     // Follow/unfollow user
     http.post(`${API_BASE}/users/:id/follow`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -693,6 +704,7 @@ export const handlers = (apiBase?: string) => {
     }),
 
     http.delete(`${API_BASE}/users/:id/follow`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -715,7 +727,8 @@ export const handlers = (apiBase?: string) => {
 
     // === POST ENDPOINTS ===
     // Get all posts (paginated, with filters)
-    http.get(`${API_BASE}/posts`, ({ request }) => {
+    http.get(`${API_BASE}/posts`, async ({ request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
       const tag = url.searchParams.get("tag");
@@ -773,7 +786,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get post by ID
-    http.get(`${API_BASE}/posts/:id`, ({ params }) => {
+    http.get(`${API_BASE}/posts/:id`, async ({ params }) => {
+      await delay(delayMs);
       const post = db.post.findFirst({
         where: { id: { equals: params.id as string } },
       });
@@ -800,7 +814,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get post by slug
-    http.get(`${API_BASE}/posts/slug/:slug`, ({ params }) => {
+    http.get(`${API_BASE}/posts/slug/:slug`, async ({ params }) => {
+      await delay(delayMs);
       const post = db.post.findFirst({
         where: { slug: { equals: params.slug as string } },
       });
@@ -828,6 +843,7 @@ export const handlers = (apiBase?: string) => {
 
     // Create post
     http.post(`${API_BASE}/posts`, async ({ request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -871,6 +887,7 @@ export const handlers = (apiBase?: string) => {
 
     // Update post
     http.patch(`${API_BASE}/posts/:id`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -919,6 +936,7 @@ export const handlers = (apiBase?: string) => {
 
     // Delete post
     http.delete(`${API_BASE}/posts/:id`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -953,6 +971,7 @@ export const handlers = (apiBase?: string) => {
 
     // Like/unlike post
     http.post(`${API_BASE}/posts/:id/like`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -980,7 +999,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get post's comments
-    http.get(`${API_BASE}/posts/:id/comments`, ({ params, request }) => {
+    http.get(`${API_BASE}/posts/:id/comments`, async ({ params, request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
       const parentOnly = url.searchParams.get("parent_only") === "true";
@@ -1012,6 +1032,7 @@ export const handlers = (apiBase?: string) => {
 
     // Create comment
     http.post(`${API_BASE}/posts/:id/comments`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -1058,6 +1079,7 @@ export const handlers = (apiBase?: string) => {
     // === COMMENT ENDPOINTS ===
     // Update comment
     http.patch(`${API_BASE}/comments/:id`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -1097,6 +1119,7 @@ export const handlers = (apiBase?: string) => {
 
     // Delete comment (soft delete)
     http.delete(`${API_BASE}/comments/:id`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -1127,6 +1150,7 @@ export const handlers = (apiBase?: string) => {
 
     // Like/unlike comment
     http.post(`${API_BASE}/comments/:id/like`, async ({ params, request }) => {
+      await delay(delayMs);
       const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return HttpResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -1155,7 +1179,8 @@ export const handlers = (apiBase?: string) => {
 
     // === TAG ENDPOINTS ===
     // Get all tags
-    http.get(`${API_BASE}/tags`, ({ request }) => {
+    http.get(`${API_BASE}/tags`, async ({ request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const search = url.searchParams.get("search");
 
@@ -1174,7 +1199,8 @@ export const handlers = (apiBase?: string) => {
     }),
 
     // Get posts by tag
-    http.get(`${API_BASE}/tags/:slug/posts`, ({ params, request }) => {
+    http.get(`${API_BASE}/tags/:slug/posts`, async ({ params, request }) => {
+      await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
 
@@ -1202,7 +1228,8 @@ export const handlers = (apiBase?: string) => {
 
     // === STATISTICS ENDPOINTS ===
     // Get post statistics
-    http.get(`${API_BASE}/posts/:id/stats`, ({ params }) => {
+    http.get(`${API_BASE}/posts/:id/stats`, async ({ params }) => {
+      await delay(delayMs);
       const postId = params.id as string;
       const post = db.post.findFirst({ where: { id: { equals: postId } } });
 
