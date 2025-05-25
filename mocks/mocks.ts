@@ -217,6 +217,7 @@ const seedData = () => {
         firstName: "Admin",
         lastName: "User",
         role: "admin",
+        isActive: true,
       });
     } else if (index === 1) {
       // Create a well-known regular user for testing
@@ -227,6 +228,7 @@ const seedData = () => {
         firstName: "Test",
         lastName: "User",
         role: "user",
+        isActive: true,
       });
     } else {
       return db.user.create();
