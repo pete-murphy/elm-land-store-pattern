@@ -39,6 +39,7 @@ port module Effect exposing
 import Api.Auth exposing (LoginRequest)
 import Browser.Navigation
 import Dict exposing (Dict)
+import Http.DetailedError exposing (DetailedError)
 import Http.Extra
 import Json.Encode as Encode
 import Paginated
@@ -209,7 +210,7 @@ renewToken =
 
 request :
     Http.Extra.Request a
-    -> (Result Http.Extra.DetailedError a -> msg)
+    -> (Result DetailedError a -> msg)
     -> Effect msg
 request req toMsg =
     Http.Extra.request req toMsg
@@ -218,7 +219,7 @@ request req toMsg =
 
 requestNoContent :
     Http.Extra.Request ()
-    -> (Result Http.Extra.DetailedError () -> msg)
+    -> (Result DetailedError () -> msg)
     -> Effect msg
 requestNoContent req toMsg =
     Http.Extra.requestNoContent req toMsg

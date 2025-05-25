@@ -2,6 +2,7 @@ module Store exposing (..)
 
 import Dict exposing (Dict)
 import Http
+import Http.DetailedError as DetailedError exposing (DetailedError)
 import Http.Extra
 import Json.Decode
 import Json.Encode as Encode
@@ -13,7 +14,7 @@ import Url.Builder
 
 
 type alias Store a =
-    Dict Key (Loadable Http.Extra.DetailedError a)
+    Dict Key (Loadable DetailedError a)
 
 
 handleRequest :
@@ -130,7 +131,7 @@ handleRequestPaginated strategy request store =
 
 handleResponse :
     Request.Msg ()
-    -> Result Http.Extra.DetailedError Encode.Value
+    -> Result DetailedError Encode.Value
     -> Store Encode.Value
     -> Store Encode.Value
 handleResponse request response store =
@@ -143,7 +144,7 @@ handleResponse request response store =
 
 handleResponsePaginated :
     Request.Msg Paginated.Config
-    -> Result Http.Extra.DetailedError (Paginated Encode.Value)
+    -> Result DetailedError (Paginated Encode.Value)
     -> Store (Paginated Encode.Value)
     -> Store (Paginated Encode.Value)
 handleResponsePaginated request response store =
@@ -204,7 +205,7 @@ type PaginatedStrategy
 get :
     Request () a
     -> Store Encode.Value
-    -> Loadable Http.Extra.DetailedError a
+    -> Loadable DetailedError a
 get request store =
     let
         key =
@@ -217,7 +218,7 @@ get request store =
         |> Maybe.withDefault Loadable.notAsked
         |> Loadable.andThen
             (Json.Decode.decodeValue (Request.decoder request)
-                >> Result.mapError Http.Extra.BadBody
+                >> Result.mapError DetailedError.BadBody
                 >> Loadable.fromResult
             )
 
@@ -225,7 +226,7 @@ get request store =
 getAll :
     Request Paginated.Config a
     -> Store (Paginated Encode.Value)
-    -> Loadable Http.Extra.DetailedError (List a)
+    -> Loadable DetailedError (List a)
 getAll request store =
     let
         key =
@@ -236,6 +237,6 @@ getAll request store =
         |> Loadable.andThen
             (.data
                 >> Result.Extra.combineMap (Json.Decode.decodeValue (Request.decoder request))
-                >> Result.mapError Http.Extra.BadBody
+                >> Result.mapError DetailedError.BadBody
                 >> Loadable.fromResult
             )

@@ -4,7 +4,7 @@ module Shared.Msg exposing (Msg(..))
 
 import Api.Auth exposing (LoginRequest, RefreshResponse)
 import Auth.Credentials exposing (LoginResponse)
-import Http.Extra
+import Http.DetailedError exposing (DetailedError)
 import Json.Encode as Encode
 import Paginated exposing (Paginated)
 import Store exposing (PaginatedStrategy, Strategy)
@@ -35,4 +35,4 @@ type Msg
 
 
 type alias ApiResult a =
-    Result Http.Extra.DetailedError a
+    Result DetailedError a

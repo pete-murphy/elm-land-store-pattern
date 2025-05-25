@@ -1,9 +1,6 @@
 module Http.Extra exposing
-    ( DetailedError(..)
-    , Request
-    , detailedErrorToString
+    ( Request
     , errorToString
-    , expectJsonWithDetailedError
     , is401
     , jsonResolver
     , request
@@ -11,6 +8,7 @@ module Http.Extra exposing
     )
 
 import Http
+import Http.DetailedError as DetailedError exposing (DetailedError)
 import Json.Decode as Decode exposing (Decoder)
 
 
@@ -60,66 +58,6 @@ jsonResolver decoder =
         )
 
 
-{-| Like `Http.Error` but:
-
-  - includes `Http.Metadata` and body `String` in the `BadStatus` case and
-  - includes the `Decode.Error` in the `BadBody` case
-
--}
-type DetailedError
-    = BadUrl String
-    | Timeout
-    | NetworkError
-    | BadStatus Http.Metadata String
-    | BadBody Decode.Error
-
-
-detailedErrorToString : DetailedError -> String
-detailedErrorToString error =
-    case error of
-        BadUrl url ->
-            "Bad URL: " ++ url
-
-        Timeout ->
-            "Timeout"
-
-        NetworkError ->
-            "Network Error"
-
-        BadStatus meta body ->
-            "Bad Status: " ++ String.fromInt meta.statusCode ++ " " ++ body
-
-        BadBody decodeError ->
-            "Bad Body: " ++ Decode.errorToString decodeError
-
-
-{-| Like `Http.expectJson` but with `DetailedError` instead of `Http.Error`
--}
-expectJsonWithDetailedError : (Result DetailedError a -> msg) -> Decoder a -> Http.Expect msg
-expectJsonWithDetailedError toMsg decoder =
-    Http.expectStringResponse toMsg
-        (resolveWithDetailedError (Decode.decodeString decoder))
-
-
-resolveWithDetailedError : (String -> Result Decode.Error a) -> Http.Response String -> Result DetailedError a
-resolveWithDetailedError toResult response =
-    case response of
-        Http.BadUrl_ url ->
-            Err (BadUrl url)
-
-        Http.Timeout_ ->
-            Err Timeout
-
-        Http.NetworkError_ ->
-            Err NetworkError
-
-        Http.BadStatus_ metadata body ->
-            Err (BadStatus metadata body)
-
-        Http.GoodStatus_ _ body ->
-            Result.mapError BadBody (toResult body)
-
-
 {-| Type alias for the argument to `Http.request`
 -}
 type alias Request_ a =
@@ -161,7 +99,7 @@ request req toMsg =
         , url = req.url
         , body = req.body
         , expect =
-            expectJsonWithDetailedError toMsg req.decoder
+            DetailedError.expectJson toMsg req.decoder
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -183,7 +121,7 @@ requestNoContent req toMsg =
 is401 : DetailedError -> Bool
 is401 result =
     case result of
-        BadStatus metadata _ ->
+        DetailedError.BadStatus metadata _ ->
             metadata.statusCode == 401
 
         _ ->

@@ -4,7 +4,7 @@ module Shared.Model exposing (Model, OkModel, store)
 
 import Auth.Credentials exposing (Credentials)
 import Dict
-import Http.Extra
+import Http.DetailedError exposing (DetailedError)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Loadable exposing (Loadable)
@@ -34,7 +34,7 @@ type alias OkModel =
 
 
 type alias Data a =
-    Loadable Http.Extra.DetailedError a
+    Loadable DetailedError a
 
 
 
