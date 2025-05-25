@@ -109,8 +109,8 @@ view props shared currentRoute { toContentMsg, content } =
                     |> Result.Extra.andMap (AccessToken.expiresAt accessToken)
                     |> Result.Extra.andMap (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
         in
-        [ Html.div [ Attributes.class "h-dvh grid grid-cols-[auto_1fr] max-w-3xl mx-auto" ]
-            [ Html.aside [ Attributes.class "p-4 sticky top-0 left-0" ]
+        [ Html.div [ Attributes.class "grid mx-auto max-w-3xl h-dvh grid-cols-[auto_1fr]" ]
+            [ Html.aside [ Attributes.class "sticky top-0 left-0 p-4 h-fit" ]
                 ((let
                     navLink path =
                         Html.a

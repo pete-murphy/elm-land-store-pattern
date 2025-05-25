@@ -303,7 +303,7 @@ viewPreview (Post internals _) =
 
               else
                 Tag.viewList internals.tags
-            , Html.div [ Html.Attributes.class "text-sm flex gap-1 text-end text-gray-500" ]
+            , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-500 text-end text-nowrap line-clamp-1" ]
                 (LocaleTime.new internals.createdAt
                     |> LocaleTime.withTimeStyle Nothing
                     |> LocaleTime.withLocaleAttrs []
