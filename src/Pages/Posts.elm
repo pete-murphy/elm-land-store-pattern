@@ -1,12 +1,22 @@
 module Pages.Posts exposing (Model, Msg, page)
 
+import Accessibility.Aria as Aria
 import Api.Post exposing (Post, Preview)
 import Auth
 import Auth.Credentials exposing (Credentials)
+import Components.Button as Button
+import Components.Icon as Icon
+import Components.Modal as Modal
 import CustomElements
+import Dict exposing (Dict)
 import Effect exposing (Effect)
+import Form
+import Form.Field as Field
+import Form.FieldView as FieldView
+import Form.Validation as Validation
 import Html exposing (Html)
 import Html.Attributes as Attributes
+import Html.Events as Events
 import Http.DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
@@ -14,6 +24,7 @@ import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Svg.Attributes
 import View exposing (View)
 
 
@@ -44,13 +55,25 @@ type alias Data a =
 type alias Model =
     { posts : Data (Paginated (Post Preview))
     , credentials : Credentials
+    , modalIsOpen : Bool
+    , formModel : Form.Model
+    , formErrors : Dict String (List String)
+    , newPost : Data ()
     }
+
+
+type alias FormErrors =
+    Dict String (List String)
 
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
 init user _ _ =
     ( { posts = Loadable.loading
       , credentials = user.credentials
+      , modalIsOpen = False
+      , formModel = Form.init
+      , formErrors = Dict.empty
+      , newPost = Loadable.notAsked
       }
     , Effect.request (Api.Post.list user.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
         BackendRespondedToGetPosts
@@ -67,7 +90,12 @@ type alias ApiResult a =
 
 type Msg
     = BackendRespondedToGetPosts (ApiResult (Paginated (Post Preview)))
+    | BackendRespondedToCreatePost (ApiResult (Post Api.Post.Details))
     | UserScrolledToBottom
+    | UserClickedCreatePost
+    | UserClosedModal
+    | UserSubmittedCreatePostForm (Form.Validated String Api.Post.CreatePostRequest)
+    | FormMsg (Form.Msg Msg)
     | NoOp
 
 
@@ -89,6 +117,25 @@ update msg model =
               }
             , Effect.none
             )
+
+        BackendRespondedToCreatePost result ->
+            case result of
+                Ok _ ->
+                    ( { model
+                        | modalIsOpen = False
+                        , formModel = Form.init
+                        , formErrors = Dict.empty
+                        , newPost = Loadable.succeed ()
+                        , posts = Loadable.toLoading model.posts
+                      }
+                    , Effect.request (Api.Post.list model.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
+                        BackendRespondedToGetPosts
+                    )
+
+                Err error ->
+                    ( { model | newPost = Loadable.fail error }
+                    , Effect.none
+                    )
 
         UserScrolledToBottom ->
             case Loadable.value model.posts of
@@ -112,6 +159,42 @@ update msg model =
                 _ ->
                     ( model, Effect.none )
 
+        UserClickedCreatePost ->
+            ( { model
+                | modalIsOpen = True
+                , formErrors = Dict.empty
+              }
+            , Effect.none
+            )
+
+        UserClosedModal ->
+            ( { model
+                | modalIsOpen = False
+                , formErrors = Dict.empty
+              }
+            , Effect.none
+            )
+
+        UserSubmittedCreatePostForm (Form.Valid createPostRequest) ->
+            ( { model | newPost = Loadable.loading }
+            , Effect.request (Api.Post.create model.credentials createPostRequest)
+                BackendRespondedToCreatePost
+            )
+
+        UserSubmittedCreatePostForm (Form.Invalid _ errors) ->
+            ( { model | formErrors = errors }
+            , Effect.none
+            )
+
+        FormMsg formMsg ->
+            let
+                ( updatedFormModel, cmd ) =
+                    Form.update formMsg model.formModel
+            in
+            ( { model | formModel = updatedFormModel }
+            , Effect.sendCmd cmd
+            )
+
         NoOp ->
             ( model, Effect.none )
 
@@ -126,6 +209,107 @@ subscriptions _ =
 
 
 
+-- FORM
+
+
+createPostForm : Dict String (List String) -> Form.HtmlForm String Api.Post.CreatePostRequest () msg
+createPostForm errors =
+    (\title content excerpt status ->
+        { combine =
+            Validation.succeed
+                (\titleVal contentVal excerptVal statusVal ->
+                    Api.Post.CreatePostRequest
+                        titleVal
+                        contentVal
+                        excerptVal
+                        statusVal
+                        []
+                )
+                |> Validation.andMap title
+                |> Validation.andMap content
+                |> Validation.andMap excerpt
+                |> Validation.andMap
+                    (status
+                        |> Validation.andThen
+                            (\statusString ->
+                                case statusString of
+                                    "draft" ->
+                                        Validation.succeed Api.Post.Draft
+
+                                    "published" ->
+                                        Validation.succeed Api.Post.Published
+
+                                    _ ->
+                                        Validation.fail "Invalid status" status
+                            )
+                    )
+        , view =
+            \context ->
+                let
+                    fieldView label field attrs =
+                        let
+                            id =
+                                Validation.fieldName field
+
+                            errorForField =
+                                Dict.get id errors
+                                    |> Maybe.andThen List.head
+                        in
+                        Html.div [ Attributes.class "grid relative gap-1" ]
+                            [ Html.label
+                                [ Attributes.class "text-sm font-semibold"
+                                , Attributes.for id
+                                ]
+                                [ Html.text label ]
+                            , case errorForField of
+                                Just error ->
+                                    Html.div
+                                        [ Attributes.class "text-sm text-red-500" ]
+                                        [ Html.text error ]
+
+                                Nothing ->
+                                    Html.text ""
+                            , FieldView.input
+                                (Attributes.class "py-2 px-4 w-full rounded-lg border border-gray-800 well-focus"
+                                    :: Attributes.id id
+                                    :: attrs
+                                )
+                                field
+                            ]
+                in
+                [ fieldView "Title" title []
+                , fieldView "Content" content []
+                , fieldView "Excerpt" excerpt []
+                , fieldView "Status" status []
+                , Button.new
+                    |> Button.withLoading context.submitting
+                    |> Button.withChildren [ Html.text "Create" ]
+                    |> Button.toHtml
+                ]
+        }
+    )
+        |> Form.form
+        |> Form.field "title"
+            (Field.text
+                |> Field.required "Title is required"
+            )
+        |> Form.field "content"
+            (Field.text
+                |> Field.textarea { cols = Nothing, rows = Nothing }
+                |> Field.required "Content is required"
+            )
+        |> Form.field "excerpt"
+            (Field.text
+                |> Field.textarea { cols = Nothing, rows = Nothing }
+            )
+        |> Form.field "status"
+            (Field.text
+                |> Field.withInitialValue (\_ -> "draft")
+                |> Field.required "Status is required"
+            )
+
+
+
 -- VIEW
 
 
@@ -134,10 +318,45 @@ view model =
     { title = "Posts"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
-            [ viewPostsSection model.posts
+            [ Html.div [ Attributes.class "flex justify-between items-center" ]
+                [ Html.h1 [ Attributes.class "text-2xl font-bold" ] [ Html.text "Posts" ]
+                , Button.new
+                    |> Button.withText "Create Post"
+                    |> Button.withOnClick UserClickedCreatePost
+                    |> Button.toHtml
+                ]
+            , viewCreatePostModal model
+            , viewPostsSection model.posts
             ]
         ]
     }
+
+
+viewCreatePostModal : Model -> Html Msg
+viewCreatePostModal model =
+    Modal.new
+        { onClose = UserClosedModal
+        , open = model.modalIsOpen
+        }
+        [ Html.h2 [ Attributes.class "mb-4 text-xl font-bold" ]
+            [ Html.text "Create New Post" ]
+        , Html.div [ Attributes.class "mb-4" ]
+            [ createPostForm model.formErrors
+                |> Form.renderHtml
+                    { submitting = Loadable.isLoading model.newPost
+                    , state = model.formModel
+                    , toMsg = FormMsg
+                    }
+                    (Form.options "new-entry-form"
+                        |> Form.withOnSubmit
+                            (.parsed >> UserSubmittedCreatePostForm)
+                    )
+                    [ Attributes.class "grid gap-4" ]
+            ]
+        ]
+        |> Modal.withModifyAttrs
+            ((::) (Attributes.class "w-full max-w-xl"))
+        |> Modal.toHtml
 
 
 viewPostsSection : Data (Paginated (Post Preview)) -> Html Msg

@@ -880,6 +880,8 @@ export const handlers = (apiBase?: string, delayMs: number = 0) => {
         author: currentUser,
         tags,
         viewCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       return HttpResponse.json(post, { status: 201 });

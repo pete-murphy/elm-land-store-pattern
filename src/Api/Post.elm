@@ -306,7 +306,7 @@ viewPreview (Post internals _) =
             [ Html.text internals.excerpt ]
         , Html.footer [ Html.Attributes.class "flex justify-between items-center" ]
             [ if List.isEmpty internals.tags then
-                Html.text ""
+                Html.div [] []
 
               else
                 Tag.viewList internals.tags

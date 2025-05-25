@@ -303,6 +303,51 @@ describe("Posts API", () => {
       const data = await response.json();
       expect(data.error).toBe("Title and content are required");
     });
+
+    it("should create a post and verify it appears in posts list", async () => {
+      const accessToken = await getAccessToken();
+      const testTag = getTestTag();
+      const uniqueTitle = `Integration Test Post ${Date.now()}`;
+
+      // Create a new post
+      const postData = {
+        title: uniqueTitle,
+        content:
+          "This is an integration test post to verify it appears in the list",
+        excerpt: "Integration test excerpt",
+        status: "published",
+        tagIds: [testTag?.id],
+      };
+
+      const createResponse = await fetch(`${API_BASE}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(postData),
+      });
+
+      // Verify post creation returned 201
+      expect(createResponse.status).toBe(201);
+      const createdPost = await createResponse.json();
+      expect(createdPost.title).toBe(uniqueTitle);
+      expect(createdPost.status).toBe("published");
+
+      // Fetch all posts
+      const listResponse = await fetch(`${API_BASE}/posts`);
+      expect(listResponse.status).toBe(200);
+      const listData = await listResponse.json();
+
+      // Verify the created post appears in the list
+      const foundPost = listData.data.find(
+        (post: any) => post.id === createdPost.id
+      );
+      expect(foundPost).toBeDefined();
+      expect(foundPost.title).toBe(uniqueTitle);
+      expect(foundPost.status).toBe("published");
+      expect(foundPost.author.username).toBe("testuser");
+    });
   });
 
   describe("PATCH /api/posts/:id", () => {
