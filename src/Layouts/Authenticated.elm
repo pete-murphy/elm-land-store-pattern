@@ -101,7 +101,7 @@ view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
         [ Html.div [ Attributes.class "grid mx-auto max-w-3xl grid-cols-[auto_1fr]" ]
-            [ Html.aside [ Attributes.class "sticky grid top-0 left-0 p-4 h-dvh" ]
+            [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-4 h-dvh" ]
                 ([ viewNav currentRoute
                  , Html.div [ Attributes.class "self-end" ]
                     [ viewUserInfo props.user.credentials
@@ -193,7 +193,7 @@ viewNav currentRoute =
     let
         navLink path =
             Html.a
-                (Attributes.class "font-semibold"
+                (Attributes.class "relative p-2 font-semibold rounded-md aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:h-[calc(100%-0.5rem)] before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 active:transition bg-gray-800/0 hover:bg-gray-800/5 active:bg-gray-800/10"
                     :: (if path == currentRoute.path then
                             [ Aria.currentPage ]
 
@@ -203,8 +203,9 @@ viewNav currentRoute =
                 )
     in
     Html.nav [ Attributes.class "p-2" ]
-        [ Html.ul [ Attributes.class "flex gap-4" ]
+        [ Html.ul [ Attributes.class "grid gap-4" ]
             ([ ( Route.Path.Home_, "Home" )
+             , ( Route.Path.Posts, "Posts" )
              ]
                 |> List.map
                     (\( path, text ) ->

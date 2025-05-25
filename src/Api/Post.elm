@@ -274,7 +274,7 @@ delete credentials postId =
 
 viewPreviewList : List (Post Preview) -> Html msg
 viewPreviewList posts =
-    Html.ul [ Html.Attributes.class "flex flex-col gap-4" ]
+    Html.ul [ Html.Attributes.class "flex flex-col gap-8" ]
         (List.map viewPreview posts)
 
 
