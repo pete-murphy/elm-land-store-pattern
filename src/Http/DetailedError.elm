@@ -8,7 +8,9 @@ module Http.DetailedError exposing (..)
 -}
 
 import Http
+import Http.Metadata
 import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode
 
 
 type DetailedError
@@ -36,6 +38,47 @@ toString error =
 
         BadBody decodeError ->
             "Bad Body: " ++ Decode.errorToString decodeError
+
+
+encode : DetailedError -> Encode.Value
+encode error =
+    case error of
+        BadUrl url ->
+            Encode.object
+                [ ( "type", Encode.string "BadUrl" )
+                , ( "url", Encode.string url )
+                ]
+
+        Timeout ->
+            Encode.object
+                [ ( "type", Encode.string "Timeout" )
+                ]
+
+        NetworkError ->
+            Encode.object
+                [ ( "type", Encode.string "NetworkError" )
+                ]
+
+        BadStatus meta body ->
+            Encode.object
+                [ ( "type", Encode.string "BadStatus" )
+                , ( "value"
+                  , Encode.object
+                        [ ( "metadata", Http.Metadata.encode meta )
+                        , ( "body", Encode.string body )
+                        ]
+                  )
+                ]
+
+        BadBody decodeError ->
+            Encode.object
+                [ ( "type", Encode.string "BadBody" )
+                , ( "value"
+                  , Encode.object
+                        [ ( "decodeError", Encode.string (Decode.errorToString decodeError) )
+                        ]
+                  )
+                ]
 
 
 {-| Like `Http.expectJson` but with `DetailedError` instead of `Http.Error`

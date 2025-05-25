@@ -7,7 +7,7 @@ import Auth
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import Http.Extra
+import Http.DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
@@ -38,7 +38,7 @@ toLayout user _ =
 
 
 type alias Data a =
-    Loadable Http.Extra.DetailedError a
+    Loadable DetailedError a
 
 
 type alias Model =
@@ -70,7 +70,7 @@ init user _ _ =
 
 
 type alias ApiResult a =
-    Result Http.Extra.DetailedError a
+    Result DetailedError a
 
 
 type Msg

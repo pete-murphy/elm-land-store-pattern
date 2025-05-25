@@ -10,7 +10,7 @@ import Form.FieldView as FieldView
 import Form.Validation as Validation
 import Html
 import Html.Attributes as Attributes
-import Http.Extra
+import Http.DetailedError
 import Loadable
 import Page exposing (Page)
 import Result.Extra
@@ -117,7 +117,7 @@ view shared model =
                         Html.output
                             [ Attributes.class "block p-4 mb-4 bg-red-50 rounded-xl border-2 border-red-500 border-solid" ]
                             [ Html.h2 [ Attributes.class "text-lg font-bold" ] [ Html.text "There is a problem" ]
-                            , Html.text (Http.Extra.detailedErrorToString err)
+                            , Html.text (Http.DetailedError.toString err)
                             ]
 
                     ( False, _ ) ->
