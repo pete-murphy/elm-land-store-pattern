@@ -33,6 +33,11 @@ jobs:
       - name: Build with Elm Land
         run: npx elm-land build
 
+      - name: Fix asset paths for GitHub Pages
+        run: |
+          # Add base tag to fix asset paths for GitHub Pages subpath
+          sed -i 's|<head>|<head>\n    <base href="/elm-land-store-pattern/">|' dist/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
         with:
