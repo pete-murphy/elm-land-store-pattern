@@ -6,7 +6,6 @@ import Api.Auth exposing (LoginRequest, RefreshResponse)
 import Auth.Credentials exposing (LoginResponse)
 import Http.DetailedError exposing (DetailedError)
 import Json.Encode as Encode
-import Paginated exposing (Paginated)
 import Store exposing (PaginatedStrategy, Strategy)
 
 
@@ -28,7 +27,7 @@ type Msg
     | StoreRequest Strategy Store.Msg
     | StoreRequestPaginated PaginatedStrategy Store.Msg
     | StoreResponse Store.Msg (ApiResult Encode.Value)
-    | StoreResponsePaginated Store.Msg (ApiResult (Paginated Encode.Value))
+    | StoreResponsePaginated Store.Msg (ApiResult Encode.Value)
       -- NOOP
     | NoOp
 

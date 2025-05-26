@@ -43,6 +43,8 @@ import Browser.Navigation
 import Dict exposing (Dict)
 import Http.DetailedError exposing (DetailedError)
 import Http.Extra
+import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode as Encode
 import Paginated
 import Route
@@ -237,6 +239,10 @@ sendStoreRequest strategy req =
         { path = req.path
         , query = req.query
         , headers = req.headers
+        , decoder =
+            Json.Decode.succeed {- "validate don't parse" -} (\_ x -> x)
+                |> Json.Decode.Pipeline.custom req.decoder
+                |> Json.Decode.Pipeline.custom Json.Decode.value
         }
         |> SendSharedMsg
 
@@ -247,6 +253,10 @@ sendStoreRequestPaginated strategy req =
         { path = req.path
         , query = req.query
         , headers = req.headers
+        , decoder =
+            Json.Decode.succeed (\_ x -> x)
+                |> Json.Decode.Pipeline.custom req.decoder
+                |> Json.Decode.Pipeline.custom Json.Decode.value
         }
         |> SendSharedMsg
 

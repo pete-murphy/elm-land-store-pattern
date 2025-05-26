@@ -59,10 +59,7 @@ init flagsResult _ =
             ( Ok
                 { credentials = Loadable.fromMaybe flags.credentials
                 , logout = Loadable.notAsked
-                , store =
-                    { paginated = Dict.empty
-                    , unpaginated = Dict.empty
-                    }
+                , store = Dict.empty
                 }
             , Effect.none
             )
@@ -96,10 +93,6 @@ update route msg model =
 
 updateOk : Route () -> Msg -> Shared.Model.OkModel -> ( Shared.Model.OkModel, Effect Msg )
 updateOk route msg model =
-    let
-        modelStore =
-            model.store
-    in
     case msg of
         Shared.Msg.NoOp ->
             ( model
@@ -181,9 +174,9 @@ updateOk route msg model =
         Shared.Msg.StoreRequest strategy storeMsg ->
             let
                 ( newStore, maybeRequest ) =
-                    Store.handleRequest strategy storeMsg modelStore.unpaginated
+                    Store.handleRequest strategy storeMsg model.store
             in
-            ( { model | store = { modelStore | unpaginated = newStore } }
+            ( { model | store = newStore }
             , case maybeRequest of
                 Just request ->
                     Effect.request request
@@ -196,9 +189,9 @@ updateOk route msg model =
         Shared.Msg.StoreRequestPaginated strategy storeMsg ->
             let
                 ( newStore, maybeRequest ) =
-                    Store.handleRequestPaginated strategy storeMsg modelStore.paginated
+                    Store.handleRequestPaginated strategy storeMsg model.store
             in
-            ( { model | store = { modelStore | paginated = newStore } }
+            ( { model | store = newStore }
             , case maybeRequest of
                 Just request ->
                     Effect.request request
@@ -211,18 +204,18 @@ updateOk route msg model =
         Shared.Msg.StoreResponse storeMsg result ->
             let
                 newStore =
-                    Store.handleResponse storeMsg result modelStore.unpaginated
+                    Store.handleResponse storeMsg result model.store
             in
-            ( { model | store = { modelStore | unpaginated = newStore } }
+            ( { model | store = newStore }
             , Effect.none
             )
 
         Shared.Msg.StoreResponsePaginated storeMsg result ->
             let
                 newStore =
-                    Store.handleResponsePaginated storeMsg result modelStore.paginated
+                    Store.handleResponsePaginated storeMsg result model.store
             in
-            ( { model | store = { modelStore | paginated = newStore } }
+            ( { model | store = newStore }
             , Effect.none
             )
 

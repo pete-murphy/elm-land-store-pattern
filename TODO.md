@@ -1,6 +1,6 @@
 - [x] Refactor `Request` to use URL parts
-- [ ] Combine `.paginated` + `.unpaginated` into single `Dict`
-- [ ] Validate (don't parse) JSON 😛
+- [x] Combine `.paginated` + `.unpaginated` into single `Dict`
+- [x] Validate (don't parse) JSON 😛
 - [ ] Consolidate strategies(?) and put them in a separate module
 - [x] Refactor `CustomElements.intersectionSentinel` to `IntersectionObservee` with builder pattern
 

@@ -6,9 +6,7 @@ import Auth.Credentials exposing (Credentials)
 import Dict
 import Http.DetailedError exposing (DetailedError)
 import Json.Decode as Decode
-import Json.Encode as Encode
 import Loadable exposing (Loadable)
-import Paginated exposing (Paginated)
 import Store exposing (Store)
 
 
@@ -26,10 +24,7 @@ type alias Model =
 type alias OkModel =
     { credentials : Data Credentials
     , logout : Data ()
-    , store :
-        { paginated : Store (Paginated Encode.Value)
-        , unpaginated : Store Encode.Value
-        }
+    , store : Store
     }
 
 
@@ -43,16 +38,11 @@ type alias Data a =
 
 store :
     Model
-    ->
-        { paginated : Store (Paginated Encode.Value)
-        , unpaginated : Store Encode.Value
-        }
+    -> Store
 store model =
     case model of
         Ok okModel ->
             okModel.store
 
         Err _ ->
-            { paginated = Dict.empty
-            , unpaginated = Dict.empty
-            }
+            Dict.empty

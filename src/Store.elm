@@ -1,34 +1,32 @@
 module Store exposing (..)
 
--- import Store.Request as Request exposing (Key, Request)
-
 import Dict exposing (Dict)
 import Http
 import Http.DetailedError as DetailedError exposing (DetailedError)
 import Http.Extra exposing (Request)
 import Json.Decode
-import Json.Encode as Encode
 import Loadable exposing (Loadable)
-import Paginated exposing (Paginated)
+import Paginated
 import Url.Builder
 
 
-type alias Store a =
-    Dict String (Loadable DetailedError a)
+type alias Store =
+    Dict String (Loadable DetailedError Json.Decode.Value)
 
 
 type alias Msg =
     { path : List String
     , query : List Url.Builder.QueryParameter
     , headers : List Http.Header
+    , decoder : Json.Decode.Decoder Json.Decode.Value
     }
 
 
 handleRequest :
     Strategy
     -> Msg
-    -> Store Encode.Value
-    -> ( Store Encode.Value, Maybe (Request Encode.Value) )
+    -> Store
+    -> ( Store, Maybe (Request Json.Decode.Value) )
 handleRequest strategy request store =
     let
         key =
@@ -45,14 +43,14 @@ handleRequest strategy request store =
         newStoreInsert =
             Dict.insert key Loadable.loading store
 
-        req : Request Encode.Value
+        req : Request Json.Decode.Value
         req =
             { method = "GET"
             , headers = request.headers
             , path = request.path
             , query = request.query
             , body = Http.emptyBody
-            , decoder = Json.Decode.value
+            , decoder = request.decoder
             }
     in
     case ( strategy, Dict.get key store ) of
@@ -72,8 +70,8 @@ handleRequest strategy request store =
 handleRequestPaginated :
     PaginatedStrategy
     -> Msg
-    -> Store (Paginated Encode.Value)
-    -> ( Store (Paginated Encode.Value), Maybe (Request (Paginated Encode.Value)) )
+    -> Store
+    -> ( Store, Maybe (Request Json.Decode.Value) )
 handleRequestPaginated strategy request store =
     let
         key =
@@ -82,6 +80,10 @@ handleRequestPaginated strategy request store =
         lastFetched =
             Dict.get key store
                 |> Maybe.andThen Loadable.toMaybe
+                |> Maybe.andThen
+                    (Json.Decode.decodeValue (Paginated.decoder Json.Decode.value)
+                        >> Result.toMaybe
+                    )
 
         maybePaginationParams =
             case ( lastFetched |> Maybe.map .pagination, strategy ) of
@@ -104,7 +106,7 @@ handleRequestPaginated strategy request store =
 
         Just paginationParams ->
             let
-                newStore : Store (Paginated Encode.Value)
+                newStore : Store
                 newStore =
                     Dict.update key
                         (Maybe.map Loadable.toLoading
@@ -113,21 +115,14 @@ handleRequestPaginated strategy request store =
                         )
                         store
 
-                req : Request (Paginated Encode.Value)
+                req : Request Json.Decode.Value
                 req =
                     { method = "GET"
                     , headers = request.headers
                     , path = request.path
                     , query = request.query ++ paginationParams
-
-                    -- , url =
-                    --     -- HACK
-                    --     if String.contains "?" request.url then
-                    --         request.url ++ "&" ++ Url.Builder.toQuery paginationParams
-                    --     else
-                    --         request.url ++ "?" ++ Url.Builder.toQuery paginationParams
                     , body = Http.emptyBody
-                    , decoder = Paginated.decoder Json.Decode.value
+                    , decoder = request.decoder
                     }
             in
             ( newStore, Just req )
@@ -135,9 +130,9 @@ handleRequestPaginated strategy request store =
 
 handleResponse :
     Msg
-    -> Result DetailedError Encode.Value
-    -> Store Encode.Value
-    -> Store Encode.Value
+    -> Result DetailedError Json.Decode.Value
+    -> Store
+    -> Store
 handleResponse request response store =
     let
         key =
@@ -148,9 +143,9 @@ handleResponse request response store =
 
 handleResponsePaginated :
     Msg
-    -> Result DetailedError (Paginated Encode.Value)
-    -> Store (Paginated Encode.Value)
-    -> Store (Paginated Encode.Value)
+    -> Result DetailedError Json.Decode.Value
+    -> Store
+    -> Store
 handleResponsePaginated request response store =
     let
         key =
@@ -161,13 +156,24 @@ handleResponsePaginated request response store =
             (\prev ->
                 let
                     prevData =
-                        Loadable.map .data prev
+                        prev
+                            |> Loadable.andThen
+                                (Json.Decode.decodeValue (Paginated.decoder Json.Decode.value)
+                                    >> Result.mapError DetailedError.BadBody
+                                    >> Result.map .data
+                                    >> Loadable.fromResult
+                                )
                             |> Loadable.withDefault []
 
                     apiDataNextPage =
                         Loadable.fromResult response
                 in
                 apiDataNextPage
+                    |> Loadable.andThen
+                        (Json.Decode.decodeValue (Paginated.decoder Json.Decode.value)
+                            >> Result.mapError DetailedError.BadBody
+                            >> Loadable.fromResult
+                        )
                     |> Loadable.map
                         (\nextPage ->
                             { nextPage
@@ -180,6 +186,7 @@ handleResponsePaginated request response store =
                                             prevData ++ nextPage.data
                             }
                         )
+                    |> Loadable.map (Paginated.encode identity)
             )
             >> Maybe.withDefault Loadable.loading
             >> Just
@@ -208,7 +215,7 @@ type PaginatedStrategy
 
 get :
     Request a
-    -> Store Encode.Value
+    -> Store
     -> Loadable DetailedError a
 get request store =
     let
@@ -225,23 +232,3 @@ get request store =
                 >> Result.mapError DetailedError.BadBody
                 >> Loadable.fromResult
             )
-
-
-getAll :
-    Request (Paginated a)
-    -> Store (Paginated Encode.Value)
-    -> Loadable DetailedError (List a)
-getAll request store =
-    let
-        url =
-            Url.Builder.absolute request.path request.query
-    in
-    Dict.get url store
-        |> Maybe.withDefault Loadable.notAsked
-        |> Loadable.andThen
-            (Paginated.encode {- TODOn't -} identity
-                >> Json.Decode.decodeValue request.decoder
-                >> Result.mapError DetailedError.BadBody
-                >> Loadable.fromResult
-            )
-        |> Loadable.map .data
