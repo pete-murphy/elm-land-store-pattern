@@ -145,15 +145,13 @@ statusDecoder =
 
 list :
     Credentials
-    -> { page : Int, limit : Int, status : Maybe Status, search : Maybe String }
+    -> { limit : Int, status : Maybe Status, search : Maybe String }
     -> Request (Paginated (Post Preview))
 list credentials params =
     let
         queryParams =
-            [ Url.Builder.int "page" params.page
-            , Url.Builder.int "limit" params.limit
-            ]
-                ++ (case params.status of
+            Url.Builder.int "limit" params.limit
+                :: (case params.status of
                         Just statusValue ->
                             [ Url.Builder.string "status" (statusToString statusValue) ]
 

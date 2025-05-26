@@ -2,27 +2,34 @@ module Pages.Users exposing (Model, Msg, page)
 
 import Api.User exposing (Preview, User)
 import Auth
-import Auth.Credentials exposing (Credentials)
 import Components.IntersectionObservee as IntersectionObservee
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Http.DetailedError as DetailedError exposing (DetailedError)
+import Http.Extra exposing (Request)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Shared.Model
+import Store exposing (PaginatedStrategy(..), Store)
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared _ =
+    let
+        requests =
+            { users = Api.User.list user.credentials { limit = 10 }
+            }
+    in
     Page.new
-        { init = init user shared
-        , update = update
-        , view = view
+        { init = init requests
+        , update = update requests
+        , view = view requests (Shared.Model.store shared)
         , subscriptions = subscriptions
         }
         |> Page.withLayout (toLayout user)
@@ -37,23 +44,19 @@ toLayout user _ =
 -- INIT
 
 
-type alias Data a =
-    Loadable DetailedError a
-
-
-type alias Model =
-    { users : Data (Paginated (User Preview))
-    , credentials : Credentials
+type alias Requests =
+    { users : Request (Paginated (User Preview))
     }
 
 
-init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
-init user _ _ =
-    ( { users = Loadable.loading
-      , credentials = user.credentials
-      }
-    , Effect.request (Api.User.list user.credentials { page = 1, limit = 10 })
-        BackendRespondedToGetUsers
+type alias Model =
+    {}
+
+
+init : Requests -> () -> ( Model, Effect Msg )
+init requests _ =
+    ( {}
+    , Effect.sendStoreRequestPaginated NextPage requests.users
     )
 
 
@@ -61,54 +64,18 @@ init user _ _ =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetUsers (ApiResult (Paginated (User Preview)))
-    | UserScrolledToBottom
+    = UserScrolledToBottom
     | NoOp
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Requests -> Msg -> Model -> ( Model, Effect Msg )
+update requests msg model =
     case msg of
-        BackendRespondedToGetUsers result ->
-            ( { model
-                | users =
-                    case Loadable.value model.users of
-                        Loadable.Empty ->
-                            Loadable.fromResult result
-
-                        _ ->
-                            Loadable.succeed Paginated.merge
-                                |> Loadable.andMap model.users
-                                |> Loadable.andMap (Loadable.fromResult result)
-                                |> Loadable.toNotLoading
-              }
-            , Effect.none
-            )
-
         UserScrolledToBottom ->
-            case Loadable.value model.users of
-                Loadable.Success paginatedUsers ->
-                    if paginatedUsers.pagination.hasNextPage then
-                        ( { model | users = Loadable.toLoading model.users }
-                        , Effect.request
-                            (Api.User.list model.credentials
-                                { page = paginatedUsers.pagination.page + 1
-                                , limit = paginatedUsers.pagination.limit
-                                }
-                            )
-                            BackendRespondedToGetUsers
-                        )
-
-                    else
-                        ( model, Effect.none )
-
-                _ ->
-                    ( model, Effect.none )
+            ( model
+            , Effect.sendStoreRequestPaginated NextPage requests.users
+            )
 
         NoOp ->
             ( model, Effect.none )
@@ -127,12 +94,16 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+type alias Data a =
+    Loadable DetailedError a
+
+
+view : Requests -> Store -> Model -> View Msg
+view requests store model =
     { title = "Users"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
-            [ viewUsersSection model.users
+            [ viewUsersSection (Store.get requests.users store)
             ]
         ]
     }

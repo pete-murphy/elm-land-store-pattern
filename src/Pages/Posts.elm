@@ -17,21 +17,29 @@ import Form.Validation as Validation
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Http.DetailedError as DetailedError exposing (DetailedError)
+import Http.Extra exposing (Request)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Shared.Model
+import Store exposing (PaginatedStrategy(..), Store, Strategy(..))
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared _ =
+    let
+        requests =
+            { posts = Api.Post.list user.credentials { limit = 10, status = Nothing, search = Nothing }
+            }
+    in
     Page.new
-        { init = init user shared
-        , update = update
-        , view = view
+        { init = init requests
+        , update = update requests user
+        , view = view requests (Shared.Model.store shared)
         , subscriptions = subscriptions
         }
         |> Page.withLayout (toLayout user)
@@ -50,10 +58,13 @@ type alias Data a =
     Loadable DetailedError a
 
 
+type alias Requests =
+    { posts : Request (Paginated (Post Preview))
+    }
+
+
 type alias Model =
-    { posts : Data (Paginated (Post Preview))
-    , credentials : Credentials
-    , modal :
+    { modal :
         Maybe
             { form : Form.Model
             , errors : Dict String (List String)
@@ -62,15 +73,12 @@ type alias Model =
     }
 
 
-init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
-init user _ _ =
-    ( { posts = Loadable.loading
-      , credentials = user.credentials
-      , modal = Nothing
+init : Requests -> () -> ( Model, Effect Msg )
+init requests _ =
+    ( { modal = Nothing
       , newPost = Loadable.notAsked
       }
-    , Effect.request (Api.Post.list user.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
-        BackendRespondedToGetPosts
+    , Effect.sendStoreRequestPaginated NextPage requests.posts
     )
 
 
@@ -83,8 +91,7 @@ type alias ApiResult a =
 
 
 type Msg
-    = BackendRespondedToGetPosts (ApiResult (Paginated (Post Preview)))
-    | BackendRespondedToCreatePost (ApiResult (Post Api.Post.Details))
+    = BackendRespondedToCreatePost (ApiResult (Post Api.Post.Details))
     | UserScrolledToBottom
     | UserClickedCreatePost
     | UserClosedModal
@@ -93,35 +100,17 @@ type Msg
     | NoOp
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Requests -> Auth.User -> Msg -> Model -> ( Model, Effect Msg )
+update requests user msg model =
     case msg of
-        BackendRespondedToGetPosts result ->
-            ( { model
-                | posts =
-                    case Result.map (.pagination >> .page) result of
-                        Ok 1 ->
-                            Loadable.fromResult result
-
-                        _ ->
-                            Loadable.succeed Paginated.merge
-                                |> Loadable.andMap model.posts
-                                |> Loadable.andMap (Loadable.fromResult result)
-                                |> Loadable.toNotLoading
-              }
-            , Effect.none
-            )
-
         BackendRespondedToCreatePost result ->
             case result of
                 Ok _ ->
                     ( { model
                         | modal = Nothing
                         , newPost = Loadable.succeed ()
-                        , posts = Loadable.toLoading model.posts
                       }
-                    , Effect.request (Api.Post.list model.credentials { page = 1, limit = 10, status = Nothing, search = Nothing })
-                        BackendRespondedToGetPosts
+                    , Effect.sendStoreRequestPaginated Reset requests.posts
                     )
 
                 Err error ->
@@ -130,26 +119,9 @@ update msg model =
                     )
 
         UserScrolledToBottom ->
-            case Loadable.value model.posts of
-                Loadable.Success paginatedPosts ->
-                    if paginatedPosts.pagination.hasNextPage then
-                        ( { model | posts = Loadable.toLoading model.posts }
-                        , Effect.request
-                            (Api.Post.list model.credentials
-                                { page = paginatedPosts.pagination.page + 1
-                                , limit = paginatedPosts.pagination.limit
-                                , status = Nothing
-                                , search = Nothing
-                                }
-                            )
-                            BackendRespondedToGetPosts
-                        )
-
-                    else
-                        ( model, Effect.none )
-
-                _ ->
-                    ( model, Effect.none )
+            ( model
+            , Effect.sendStoreRequestPaginated NextPage requests.posts
+            )
 
         UserClickedCreatePost ->
             ( { model
@@ -167,7 +139,7 @@ update msg model =
 
         UserSubmittedCreatePostForm (Form.Valid createPostRequest) ->
             ( { model | newPost = Loadable.loading }
-            , Effect.request (Api.Post.create model.credentials createPostRequest)
+            , Effect.request (Api.Post.create user.credentials createPostRequest)
                 BackendRespondedToCreatePost
             )
 
@@ -306,8 +278,8 @@ createPostForm errors =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : Requests -> Store -> Model -> View Msg
+view requests store model =
     { title = "Posts"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
@@ -319,7 +291,7 @@ view model =
                     |> Button.toHtml
                 ]
             , viewCreatePostModal model
-            , viewPostsSection model.posts
+            , viewPostsSection (Store.get requests.posts store)
             ]
         ]
     }
