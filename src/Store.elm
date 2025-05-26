@@ -116,12 +116,16 @@ handleRequestPaginated strategy request store =
                     { method = "GET"
                     , headers = request.headers
                     , url =
+                        let
+                            p =
+                                String.dropLeft 1 (Url.Builder.toQuery paginationParams)
+                        in
                         -- HACK
                         if String.contains "?" request.url then
-                            request.url ++ "&" ++ Url.Builder.toQuery paginationParams
+                            request.url ++ "&" ++ p
 
                         else
-                            request.url ++ "?" ++ Url.Builder.toQuery paginationParams
+                            request.url ++ "?" ++ p
                     , body = Http.emptyBody
                     , decoder = Paginated.decoder Json.Decode.value
                     }
