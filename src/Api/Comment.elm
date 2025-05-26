@@ -89,7 +89,8 @@ get credentials postId params =
     in
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts", postId, "comments" ] queryParams
+    , path = [ "api", "posts", postId, "comments" ]
+    , query = queryParams
     , body = Http.emptyBody
     , decoder = Paginated.decoder decoder
     }
@@ -110,8 +111,8 @@ create credentials postId request =
     let
         requestBody =
             Encode.object
-                ([ ( "content", Encode.string request.content ) ]
-                    ++ (case request.parentCommentId of
+                (( "content", Encode.string request.content )
+                    :: (case request.parentCommentId of
                             Just parentId ->
                                 [ ( "parentCommentId", Encode.string parentId ) ]
 
@@ -122,7 +123,8 @@ create credentials postId request =
     in
     { method = "POST"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts", postId, "comments" ] []
+    , path = [ "api", "posts", postId, "comments" ]
+    , query = []
     , body = Http.jsonBody requestBody
     , decoder = decoder
     }
@@ -141,7 +143,8 @@ update :
 update credentials commentId request =
     { method = "PATCH"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "comments", commentId ] []
+    , path = [ "api", "comments", commentId ]
+    , query = []
     , body =
         Http.jsonBody
             (Encode.object
@@ -159,7 +162,8 @@ delete :
 delete credentials commentId =
     { method = "DELETE"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "comments", commentId ] []
+    , path = [ "api", "comments", commentId ]
+    , query = []
     , body = Http.emptyBody
     , decoder = Json.Decode.succeed ()
     }

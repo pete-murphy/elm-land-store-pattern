@@ -132,7 +132,8 @@ list credentials { page, limit } =
     in
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "users" ] queryParams
+    , path = [ "api", "users" ]
+    , query = queryParams
     , body = Http.emptyBody
     , decoder = Paginated.decoder previewDecoder
     }
@@ -145,7 +146,8 @@ get :
 get credentials userId =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "users", userId ] []
+    , path = [ "api", "users", userId ]
+    , query = []
     , body = Http.emptyBody
     , decoder = detailsDecoder
     }

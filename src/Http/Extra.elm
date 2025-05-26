@@ -10,6 +10,7 @@ module Http.Extra exposing
 import Http
 import Http.DetailedError as DetailedError exposing (DetailedError)
 import Json.Decode as Decode exposing (Decoder)
+import Url.Builder
 
 
 errorToString : Http.Error -> String
@@ -58,19 +59,6 @@ jsonResolver decoder =
         )
 
 
-{-| Type alias for the argument to `Http.request`
--}
-type alias Request_ a =
-    { method : String
-    , headers : List Http.Header
-    , url : String
-    , body : Http.Body
-    , expect : Http.Expect a
-    , timeout : Maybe Float
-    , tracker : Maybe String
-    }
-
-
 {-| The arguments to `Http.request`, but:
 
   - takes a `Decoder` instead of `Expect`
@@ -80,23 +68,19 @@ type alias Request_ a =
 type alias Request a =
     { method : String
     , headers : List Http.Header
-    , url : String
+    , path : List String
+    , query : List Url.Builder.QueryParameter
     , body : Http.Body
     , decoder : Decoder a
     }
 
 
-request_ : Request_ msg -> Cmd msg
-request_ config =
-    Http.request config
-
-
 request : Request a -> (Result DetailedError a -> msg) -> Cmd msg
 request req toMsg =
-    request_
+    Http.request
         { method = req.method
         , headers = req.headers
-        , url = req.url
+        , url = Url.Builder.absolute req.path req.query
         , body = req.body
         , expect =
             DetailedError.expectJson toMsg req.decoder
@@ -107,10 +91,10 @@ request req toMsg =
 
 requestNoContent : Request () -> (Result DetailedError () -> msg) -> Cmd msg
 requestNoContent req toMsg =
-    request_
+    Http.request
         { method = req.method
         , headers = req.headers
-        , url = req.url
+        , url = Url.Builder.absolute req.path req.query
         , body = req.body
         , expect = Http.expectStringResponse toMsg (\_ -> Ok ())
         , timeout = Nothing

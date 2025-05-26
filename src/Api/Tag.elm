@@ -45,7 +45,8 @@ get :
 get credentials =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "tags" ] []
+    , path = [ "api", "tags" ]
+    , query = []
     , body = Http.emptyBody
     , decoder = Json.Decode.list decoder
     }

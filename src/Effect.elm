@@ -234,7 +234,8 @@ requestNoContent req toMsg =
 sendStoreRequest : Store.Strategy -> Http.Extra.Request a -> Effect msg
 sendStoreRequest strategy req =
     Shared.Msg.StoreRequest strategy
-        { url = req.url
+        { path = req.path
+        , query = req.query
         , headers = req.headers
         }
         |> SendSharedMsg
@@ -243,7 +244,8 @@ sendStoreRequest strategy req =
 sendStoreRequestPaginated : Store.PaginatedStrategy -> Http.Extra.Request (Paginated.Paginated a) -> Effect msg
 sendStoreRequestPaginated strategy req =
     Shared.Msg.StoreRequestPaginated strategy
-        { url = req.url
+        { path = req.path
+        , query = req.query
         , headers = req.headers
         }
         |> SendSharedMsg

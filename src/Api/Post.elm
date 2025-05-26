@@ -170,7 +170,8 @@ list credentials params =
     in
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts" ] queryParams
+    , path = [ "api", "posts" ]
+    , query = queryParams
     , body = Http.emptyBody
     , decoder = Paginated.decoder previewDecoder
     }
@@ -184,12 +185,11 @@ listByTag :
 listByTag credentials tagId params =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url =
-        Url.Builder.absolute
-            [ "api", "tags", TagId.toString tagId, "posts" ]
-            [ Url.Builder.int "page" params.page
-            , Url.Builder.int "limit" params.limit
-            ]
+    , path = [ "api", "tags", TagId.toString tagId, "posts" ]
+    , query =
+        [ Url.Builder.int "page" params.page
+        , Url.Builder.int "limit" params.limit
+        ]
     , body = Http.emptyBody
     , decoder = Paginated.decoder previewDecoder
     }
@@ -203,12 +203,11 @@ listByUser :
 listByUser credentials userId params =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url =
-        Url.Builder.absolute
-            [ "api", "users", UserId.toString userId, "posts" ]
-            [ Url.Builder.int "page" params.page
-            , Url.Builder.int "limit" params.limit
-            ]
+    , path = [ "api", "users", UserId.toString userId, "posts" ]
+    , query =
+        [ Url.Builder.int "page" params.page
+        , Url.Builder.int "limit" params.limit
+        ]
     , body = Http.emptyBody
     , decoder = Paginated.decoder previewDecoder
     }
@@ -221,7 +220,8 @@ get :
 get credentials slug_ =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts", "slug", Slug.toString slug_ ] []
+    , path = [ "api", "posts", "slug", Slug.toString slug_ ]
+    , query = []
     , body = Http.emptyBody
     , decoder = detailsDecoder
     }
@@ -243,7 +243,8 @@ create :
 create credentials request =
     { method = "POST"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts" ] []
+    , path = [ "api", "posts" ]
+    , query = []
     , body =
         Http.jsonBody
             (Encode.object
@@ -293,7 +294,8 @@ update credentials postId request =
     in
     { method = "PATCH"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts", postId ] []
+    , path = [ "api", "posts", postId ]
+    , query = []
     , body = Http.jsonBody requestBody
     , decoder = detailsDecoder
     }
@@ -306,7 +308,8 @@ delete :
 delete credentials postId =
     { method = "DELETE"
     , headers = Credentials.httpHeaders credentials
-    , url = Url.Builder.absolute [ "api", "posts", postId ] []
+    , path = [ "api", "posts", postId ]
+    , query = []
     , body = Http.emptyBody
     , decoder = Json.Decode.succeed ()
     }

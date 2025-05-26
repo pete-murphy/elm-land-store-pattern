@@ -18,7 +18,8 @@ type alias Store a =
 
 
 type alias Msg =
-    { url : String
+    { path : List String
+    , query : List Url.Builder.QueryParameter
     , headers : List Http.Header
     }
 
@@ -31,7 +32,7 @@ handleRequest :
 handleRequest strategy request store =
     let
         key =
-            request.url
+            Url.Builder.absolute request.path request.query
 
         newStoreUpdate =
             Dict.update key
@@ -48,7 +49,8 @@ handleRequest strategy request store =
         req =
             { method = "GET"
             , headers = request.headers
-            , url = request.url
+            , path = request.path
+            , query = request.query
             , body = Http.emptyBody
             , decoder = Json.Decode.value
             }
@@ -75,7 +77,7 @@ handleRequestPaginated :
 handleRequestPaginated strategy request store =
     let
         key =
-            request.url
+            Url.Builder.absolute request.path request.query
 
         lastFetched =
             Dict.get key store
@@ -115,13 +117,15 @@ handleRequestPaginated strategy request store =
                 req =
                     { method = "GET"
                     , headers = request.headers
-                    , url =
-                        -- HACK
-                        if String.contains "?" request.url then
-                            request.url ++ "&" ++ Url.Builder.toQuery paginationParams
+                    , path = request.path
+                    , query = request.query ++ paginationParams
 
-                        else
-                            request.url ++ "?" ++ Url.Builder.toQuery paginationParams
+                    -- , url =
+                    --     -- HACK
+                    --     if String.contains "?" request.url then
+                    --         request.url ++ "&" ++ Url.Builder.toQuery paginationParams
+                    --     else
+                    --         request.url ++ "?" ++ Url.Builder.toQuery paginationParams
                     , body = Http.emptyBody
                     , decoder = Paginated.decoder Json.Decode.value
                     }
@@ -137,7 +141,7 @@ handleResponse :
 handleResponse request response store =
     let
         key =
-            request.url
+            Url.Builder.absolute request.path request.query
     in
     Dict.insert key (Loadable.fromResult response) store
 
@@ -150,7 +154,7 @@ handleResponsePaginated :
 handleResponsePaginated request response store =
     let
         key =
-            request.url
+            Url.Builder.absolute request.path request.query
     in
     Dict.update key
         (Maybe.map
@@ -209,7 +213,7 @@ get :
 get request store =
     let
         url =
-            request.url
+            Url.Builder.absolute request.path request.query
 
         maybeData =
             Dict.get url store
@@ -230,7 +234,7 @@ getAll :
 getAll request store =
     let
         url =
-            request.url
+            Url.Builder.absolute request.path request.query
     in
     Dict.get url store
         |> Maybe.withDefault Loadable.notAsked

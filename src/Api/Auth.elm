@@ -49,7 +49,8 @@ login : LoginRequest -> Request LoginResponse
 login request =
     { method = "POST"
     , headers = []
-    , url = Url.Builder.absolute [ "api", "auth", "login" ] []
+    , path = [ "api", "auth", "login" ]
+    , query = []
     , body =
         Http.jsonBody
             (Encode.object
@@ -67,7 +68,8 @@ refresh : Credentials -> Request RefreshResponse
 refresh credentials =
     { method = "POST"
     , headers = []
-    , url = Url.Builder.absolute [ "api", "auth", "refresh" ] []
+    , path = [ "api", "auth", "refresh" ]
+    , query = []
     , body =
         Http.jsonBody
             (Encode.object
@@ -89,7 +91,8 @@ logout : Credentials -> Request ()
 logout credentials =
     { method = "POST"
     , headers = []
-    , url = Url.Builder.absolute [ "api", "auth", "logout" ] []
+    , path = [ "api", "auth", "logout" ]
+    , query = []
     , body =
         Http.jsonBody
             (Encode.object
