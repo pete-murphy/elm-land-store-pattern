@@ -59,7 +59,7 @@ init user _ _ =
             BackendRespondedToGetTags
         , Effect.request (User.list user.credentials { page = 1, limit = 5 })
             BackendRespondedToGetUsers
-        , Effect.request (Post.list user.credentials { page = 1, limit = 5, status = Nothing, search = Nothing })
+        , Effect.request (Post.list user.credentials { limit = 5, status = Nothing, search = Nothing })
             BackendRespondedToGetPosts
         ]
     )
