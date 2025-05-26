@@ -198,7 +198,7 @@ listByTag credentials tagId params =
 listByUser :
     Credentials
     -> UserId
-    -> { page : Int, limit : Int }
+    -> { limit : Int }
     -> Request (Paginated (Post Preview))
 listByUser credentials userId params =
     { method = "GET"
@@ -206,8 +206,7 @@ listByUser credentials userId params =
     , url =
         Url.Builder.absolute
             [ "api", "users", UserId.toString userId, "posts" ]
-            [ Url.Builder.int "page" params.page
-            , Url.Builder.int "limit" params.limit
+            [ Url.Builder.int "limit" params.limit
             ]
     , body = Http.emptyBody
     , decoder = Paginated.decoder previewDecoder

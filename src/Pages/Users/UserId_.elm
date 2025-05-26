@@ -12,9 +12,10 @@ import Http.DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
-import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Shared.Model
+import Store exposing (PaginatedStrategy(..), Strategy(..))
 import View exposing (View)
 
 
@@ -24,7 +25,7 @@ page user shared route =
         { init = init user route
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view user shared route
         }
         |> Page.withLayout (toLayout user)
 
@@ -43,9 +44,7 @@ type alias Data a =
 
 
 type alias Model =
-    { user : Data (User Api.User.Details)
-    , posts : Data (Paginated (Post Api.Post.Preview))
-    }
+    {}
 
 
 init : Auth.User -> Route { userId : String } -> () -> ( Model, Effect Msg )
@@ -54,14 +53,12 @@ init user route () =
         userId =
             UserId.fromRoute route
     in
-    ( { user = Loadable.loading
-      , posts = Loadable.loading
-      }
+    ( {}
     , Effect.batch
-        [ Effect.request (Api.User.getById user.credentials userId)
-            BackendRespondedToGetUser
-        , Effect.request (Api.Post.listByUser user.credentials userId { page = 1, limit = 10 })
-            BackendRespondedToGetPosts
+        [ Effect.sendStoreRequest StaleWhileRevalidate
+            (Api.User.getById user.credentials userId)
+        , Effect.sendStoreRequestPaginated NextPage
+            (Api.Post.listByUser user.credentials userId { limit = 10 })
         ]
     )
 
@@ -70,29 +67,13 @@ init user route () =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetUser (ApiResult (User Api.User.Details))
-    | BackendRespondedToGetPosts (ApiResult (Paginated (Post Api.Post.Preview)))
-    | NoOp
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        BackendRespondedToGetUser result ->
-            ( { model | user = Loadable.fromResult result }
-            , Effect.none
-            )
-
-        BackendRespondedToGetPosts result ->
-            ( { model | posts = Loadable.fromResult result }
-            , Effect.none
-            )
-
         NoOp ->
             ( model
             , Effect.none
@@ -112,9 +93,23 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    case Loadable.value model.user of
+view : Auth.User -> Shared.Model -> Route { userId : String } -> Model -> View Msg
+view user shared route model =
+    let
+        store =
+            Shared.Model.store shared
+
+        userId =
+            UserId.fromRoute route
+
+        userData =
+            Store.get (Api.User.getById user.credentials userId) store.unpaginated
+
+        postsData =
+            Store.getAll (Api.Post.listByUser user.credentials userId { limit = 10 })
+                store.paginated
+    in
+    case Loadable.value userData of
         Loadable.Empty ->
             { title = "Loading..."
             , body = [ viewSkeletonContent ]
@@ -132,13 +127,13 @@ view model =
                 ]
             }
 
-        Loadable.Success user ->
-            { title = Api.User.fullName user
-            , body = [ viewUser user model.posts ]
+        Loadable.Success userDetails ->
+            { title = Api.User.fullName userDetails
+            , body = [ viewUser userDetails postsData ]
             }
 
 
-viewUser : User Api.User.Details -> Data (Paginated (Post Api.Post.Preview)) -> Html Msg
+viewUser : User Api.User.Details -> Data (List (Post Api.Post.Preview)) -> Html Msg
 viewUser user postsData =
     Html.article [ Attributes.class "flex flex-col gap-6" ]
         [ Html.header [ Attributes.class "flex gap-6 items-start" ]
@@ -198,7 +193,7 @@ viewUser user postsData =
         ]
 
 
-viewPostsSection : Data (Paginated (Post Api.Post.Preview)) -> Html Msg
+viewPostsSection : Data (List (Post Api.Post.Preview)) -> Html Msg
 viewPostsSection postsData =
     case Loadable.value postsData of
         Loadable.Empty ->
@@ -213,12 +208,12 @@ viewPostsSection postsData =
                 ]
 
         Loadable.Success paginatedPosts ->
-            if List.isEmpty paginatedPosts.data then
+            if List.isEmpty paginatedPosts then
                 Html.div [ Attributes.class "py-8 text-center text-gray-500" ]
                     [ Html.text "No posts yet" ]
 
             else
-                Api.Post.viewPreviewList paginatedPosts.data
+                Api.Post.viewPreviewList paginatedPosts
 
 
 viewPostsSkeletonContent : Html msg
