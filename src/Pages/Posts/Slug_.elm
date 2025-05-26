@@ -1,33 +1,45 @@
 module Pages.Posts.Slug_ exposing (Model, Msg, page)
 
 import Api.Comment as Comment exposing (Comment)
-import Api.Post exposing (Post)
+import Api.Post exposing (Details, Post)
 import Api.Slug as Slug
 import Api.Tag as Tag
 import Api.User as User
 import Auth
-import Auth.Credentials exposing (Credentials)
+import Components.IntersectionObservee as IntersectionObservee
 import Components.LocaleTime as LocaleTime
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Http.DetailedError exposing (DetailedError)
+import Http.Extra exposing (Request)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Shared.Model
+import Store exposing (Store, Strategy(..))
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route { slug : String } -> Page Model Msg
 page user shared route =
+    let
+        slug =
+            Slug.fromRoute route
+
+        requests =
+            { post = Api.Post.get user.credentials slug
+            , comments = \post -> Comment.get user.credentials (Api.Post.id post) { limit = 50, parentOnly = False }
+            }
+    in
     Page.new
-        { init = init user route
-        , update = update user
+        { init = init requests
+        , update = update requests
         , subscriptions = subscriptions
-        , view = view
+        , view = view requests (Shared.Model.store shared)
         }
         |> Page.withLayout (toLayout user)
 
@@ -41,27 +53,20 @@ toLayout user _ =
 -- INIT
 
 
-type alias Data a =
-    Loadable DetailedError a
-
-
-type alias Model =
-    { post : Data (Post Api.Post.Details)
-    , comments : Data (Paginated Comment)
+type alias Requests =
+    { post : Request (Post Details)
+    , comments : Post Details -> Request (Paginated Comment)
     }
 
 
-init : Auth.User -> Route { slug : String } -> () -> ( Model, Effect Msg )
-init user route () =
-    let
-        slug =
-            Slug.fromRoute route
-    in
-    ( { post = Loadable.loading
-      , comments = Loadable.notAsked
-      }
-    , Effect.request (Api.Post.get user.credentials slug)
-        BackendRespondedToGetPost
+type alias Model =
+    {}
+
+
+init : Requests -> () -> ( Model, Effect Msg )
+init requests () =
+    ( {}
+    , Effect.sendStoreRequest StaleWhileRevalidate requests.post
     )
 
 
@@ -69,43 +74,17 @@ init user route () =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetPost (ApiResult (Post Api.Post.Details))
-    | BackendRespondedToGetComments (ApiResult (Paginated Comment))
+    = UserScrolledToBottom (Post Details)
     | NoOp
 
 
-update : Auth.User -> Msg -> Model -> ( Model, Effect Msg )
-update user msg model =
+update : Requests -> Msg -> Model -> ( Model, Effect Msg )
+update requests msg model =
     case msg of
-        BackendRespondedToGetPost result ->
-            case result of
-                Ok post ->
-                    ( { model
-                        | post = Loadable.fromResult result
-                        , comments = Loadable.loading
-                      }
-                    , Effect.request
-                        (Comment.get
-                            user.credentials
-                            (Api.Post.id post)
-                            { page = 1, limit = 50, parentOnly = False }
-                        )
-                        BackendRespondedToGetComments
-                    )
-
-                Err error ->
-                    ( { model | post = Loadable.fromResult result }
-                    , Effect.none
-                    )
-
-        BackendRespondedToGetComments result ->
-            ( { model | comments = Loadable.fromResult result }
-            , Effect.none
+        UserScrolledToBottom post ->
+            ( model
+            , Effect.sendStoreRequest StaleWhileRevalidate (requests.comments post)
             )
 
         NoOp ->
@@ -127,9 +106,13 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    case Loadable.value model.post of
+type alias Data a =
+    Loadable DetailedError a
+
+
+view : Requests -> Store -> Model -> View Msg
+view requests store _ =
+    case Loadable.value (Store.get requests.post store) of
         Loadable.Empty ->
             { title = "Loading..."
             , body = [ viewSkeletonContent ]
@@ -149,7 +132,7 @@ view model =
 
         Loadable.Success post ->
             { title = Api.Post.title post
-            , body = [ viewPost post model.comments ]
+            , body = [ viewPost post (Store.get (requests.comments post) store) ]
             }
 
 
@@ -191,6 +174,9 @@ viewPost post comments =
                     ]
             ]
         , viewComments comments
+        , IntersectionObservee.new (UserScrolledToBottom post)
+            |> IntersectionObservee.withDisabled (Loadable.isLoading comments || Loadable.value comments /= Loadable.Empty)
+            |> IntersectionObservee.toHtml
         ]
 
 
@@ -218,14 +204,14 @@ viewComments commentsData =
                         [ Html.text "No comments yet." ]
 
                 else
-                    Html.div [ Attributes.class "flex flex-col gap-4" ]
+                    Html.ul [ Attributes.class "flex flex-col gap-4" ]
                         (List.map viewComment paginatedComments.data)
         ]
 
 
 viewComment : Comment -> Html Msg
 viewComment comment =
-    Html.div [ Attributes.class "p-4 bg-gray-50 rounded-lg" ]
+    Html.li [ Attributes.class "p-4 bg-gray-50 rounded-lg" ]
         [ Html.div [ Attributes.class "flex gap-2 items-center mb-2 text-sm text-gray-600" ]
             [ Html.text ("by " ++ username (Comment.author comment))
             , Html.text " • "

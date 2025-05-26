@@ -72,15 +72,13 @@ decoder =
 get :
     Credentials
     -> String
-    -> { page : Int, limit : Int, parentOnly : Bool }
+    -> { limit : Int, parentOnly : Bool }
     -> Request (Paginated Comment)
 get credentials postId params =
     let
         queryParams =
-            [ Url.Builder.int "page" params.page
-            , Url.Builder.int "limit" params.limit
-            ]
-                ++ (if params.parentOnly then
+            Url.Builder.int "limit" params.limit
+                :: (if params.parentOnly then
                         [ Url.Builder.string "parent_only" "true" ]
 
                     else
