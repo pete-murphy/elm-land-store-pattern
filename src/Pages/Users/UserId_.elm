@@ -1,6 +1,7 @@
 module Pages.Users.UserId_ exposing (Model, Msg, page)
 
 import Accessibility as Html exposing (Html)
+import Api.Post exposing (Post)
 import Api.User exposing (User)
 import Api.UserId as UserId
 import Auth
@@ -11,6 +12,7 @@ import Http.DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
+import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
 import View exposing (View)
@@ -42,6 +44,7 @@ type alias Data a =
 
 type alias Model =
     { user : Data (User Api.User.Details)
+    , posts : Data (Paginated (Post Api.Post.Preview))
     }
 
 
@@ -52,9 +55,14 @@ init user route () =
             UserId.fromRoute route
     in
     ( { user = Loadable.loading
+      , posts = Loadable.loading
       }
-    , Effect.request (Api.User.getById user.credentials userId)
-        BackendRespondedToGetUser
+    , Effect.batch
+        [ Effect.request (Api.User.getById user.credentials userId)
+            BackendRespondedToGetUser
+        , Effect.request (Api.Post.listByUser user.credentials userId { page = 1, limit = 10 })
+            BackendRespondedToGetPosts
+        ]
     )
 
 
@@ -68,6 +76,7 @@ type alias ApiResult a =
 
 type Msg
     = BackendRespondedToGetUser (ApiResult (User Api.User.Details))
+    | BackendRespondedToGetPosts (ApiResult (Paginated (Post Api.Post.Preview)))
     | NoOp
 
 
@@ -76,6 +85,11 @@ update msg model =
     case msg of
         BackendRespondedToGetUser result ->
             ( { model | user = Loadable.fromResult result }
+            , Effect.none
+            )
+
+        BackendRespondedToGetPosts result ->
+            ( { model | posts = Loadable.fromResult result }
             , Effect.none
             )
 
@@ -120,12 +134,12 @@ view model =
 
         Loadable.Success user ->
             { title = Api.User.fullName user
-            , body = [ viewUser user ]
+            , body = [ viewUser user model.posts ]
             }
 
 
-viewUser : User Api.User.Details -> Html Msg
-viewUser user =
+viewUser : User Api.User.Details -> Data (Paginated (Post Api.Post.Preview)) -> Html Msg
+viewUser user postsData =
     Html.article [ Attributes.class "flex flex-col gap-6" ]
         [ Html.header [ Attributes.class "flex gap-6 items-start" ]
             [ Html.img ""
@@ -175,6 +189,50 @@ viewUser user =
                 [ Html.text "Contact" ]
             , Html.div [ Attributes.class "text-sm text-gray-700" ]
                 [ Html.text ("Email: " ++ Api.User.email user) ]
+            ]
+        , Html.div [ Attributes.class "pt-6 border-t border-gray-200" ]
+            [ Html.h3 [ Attributes.class "mb-6 text-lg font-semibold" ]
+                [ Html.text "Posts" ]
+            , viewPostsSection postsData
+            ]
+        ]
+
+
+viewPostsSection : Data (Paginated (Post Api.Post.Preview)) -> Html Msg
+viewPostsSection postsData =
+    case Loadable.value postsData of
+        Loadable.Empty ->
+            viewPostsSkeletonContent
+
+        Loadable.Failure error ->
+            Html.div [ Attributes.class "p-4 bg-red-50 rounded-md" ]
+                [ Html.h4 [ Attributes.class "mb-2 text-lg font-semibold text-red-800" ]
+                    [ Html.text "Error loading posts" ]
+                , Html.p [ Attributes.class "text-red-700" ]
+                    [ Html.text (Http.DetailedError.toString error) ]
+                ]
+
+        Loadable.Success paginatedPosts ->
+            if List.isEmpty paginatedPosts.data then
+                Html.div [ Attributes.class "text-center py-8 text-gray-500" ]
+                    [ Html.text "No posts yet" ]
+
+            else
+                Api.Post.viewPreviewList paginatedPosts.data
+
+
+viewPostsSkeletonContent : Html msg
+viewPostsSkeletonContent =
+    Html.div [ Attributes.class "flex flex-col gap-4" ]
+        [ Html.div [ Attributes.class "animate-pulse" ]
+            [ Html.div [ Attributes.class "mb-2 w-3/4 h-6 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-2 w-1/2 h-4 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "w-full h-4 bg-gray-200 rounded" ] []
+            ]
+        , Html.div [ Attributes.class "animate-pulse" ]
+            [ Html.div [ Attributes.class "mb-2 w-2/3 h-6 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "mb-2 w-1/3 h-4 bg-gray-200 rounded" ] []
+            , Html.div [ Attributes.class "w-5/6 h-4 bg-gray-200 rounded" ] []
             ]
         ]
 

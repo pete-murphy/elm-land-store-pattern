@@ -20,15 +20,25 @@ modalDialogController isOpen attrs children =
         [ Html.node "dialog" attrs children ]
 
 
-intersectionSentinel :
+intersectionContainer :
     { disabled : Bool
     , onIntersect : msg
     }
+    -> List (Html.Attribute msg)
+    -> List (Html msg)
     -> Html.Html msg
-intersectionSentinel props =
+intersectionContainer props attrs =
     Html.node "intersection-sentinel"
-        [ Attributes.disabled props.disabled
-        , Attributes.class "block"
-        , Events.on "intersect" (Json.Decode.succeed props.onIntersect)
-        ]
-        []
+        ([ Attributes.disabled props.disabled
+         , Attributes.class "block"
+         , Events.on "intersect" (Json.Decode.succeed props.onIntersect)
+         ]
+            ++ attrs
+        )
+
+
+intersectionSentinel :
+    { disabled : Bool, onIntersect : msg }
+    -> Html msg
+intersectionSentinel props =
+    intersectionContainer props [] []

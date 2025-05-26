@@ -15,6 +15,7 @@ module Api.Post exposing
     , id
     , list
     , listByTag
+    , listByUser
     , previewDecoder
     , slug
     , status
@@ -34,6 +35,7 @@ import Api.Slug as Slug exposing (Slug)
 import Api.Tag as Tag exposing (Tag)
 import Api.TagId as TagId exposing (TagId)
 import Api.User as User exposing (User)
+import Api.UserId as UserId exposing (UserId)
 import Auth.Credentials as Credentials exposing (Credentials)
 import Components.LocaleTime as LocaleTime
 import Html.Attributes
@@ -185,6 +187,25 @@ listByTag credentials tagId params =
     , url =
         Url.Builder.absolute
             [ "api", "tags", TagId.toString tagId, "posts" ]
+            [ Url.Builder.int "page" params.page
+            , Url.Builder.int "limit" params.limit
+            ]
+    , body = Http.emptyBody
+    , decoder = Paginated.decoder previewDecoder
+    }
+
+
+listByUser :
+    Credentials
+    -> UserId
+    -> { page : Int, limit : Int }
+    -> Request (Paginated (Post Preview))
+listByUser credentials userId params =
+    { method = "GET"
+    , headers = Credentials.httpHeaders credentials
+    , url =
+        Url.Builder.absolute
+            [ "api", "users", UserId.toString userId, "posts" ]
             [ Url.Builder.int "page" params.page
             , Url.Builder.int "limit" params.limit
             ]
