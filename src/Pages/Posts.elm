@@ -2,11 +2,10 @@ module Pages.Posts exposing (Model, Msg, page)
 
 import Api.Post exposing (Post, Preview)
 import Auth
-import Auth.Credentials exposing (Credentials)
 import Components.Button as Button
 import Components.ErrorSummary as ErrorSummary
 import Components.Icon.Path as Path
-import Components.IntersectionObservee as IntersectionObservee exposing (IntersectionObservee)
+import Components.IntersectionObservee as IntersectionObservee
 import Components.Modal as Modal
 import Dict exposing (Dict)
 import Effect exposing (Effect)
@@ -25,7 +24,7 @@ import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
 import Shared.Model
-import Store exposing (PaginatedStrategy(..), Store, Strategy(..))
+import Store exposing (PaginatedStrategy(..), Store)
 import View exposing (View)
 
 

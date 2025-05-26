@@ -1,10 +1,8 @@
 module Paginated exposing (..)
 
-import Http
 import Json.Decode
 import Json.Decode.Pipeline
 import Json.Encode
-import Url.Builder
 
 
 type alias Paginated a =
@@ -21,18 +19,6 @@ type alias Pagination =
     , hasNextPage : Bool
     , hasPreviousPage : Bool
     }
-
-
-type alias Request =
-    { headers : List Http.Header
-    , pathSegments : List String
-    , queryParams : List Url.Builder.QueryParameter
-    , config : Config
-    }
-
-
-type alias Config =
-    { perPage : Int }
 
 
 decoder : Json.Decode.Decoder a -> Json.Decode.Decoder (Paginated a)
