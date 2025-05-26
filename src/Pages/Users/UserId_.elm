@@ -9,22 +9,34 @@ import Components.LocaleTime as LocaleTime
 import Effect exposing (Effect)
 import Html.Attributes as Attributes
 import Http.DetailedError exposing (DetailedError)
+import Http.Extra exposing (Request)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Shared.Model
+import Store exposing (PaginatedStrategy(..), Store, Strategy(..))
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route { userId : String } -> Page Model Msg
 page user shared route =
+    let
+        userId =
+            UserId.fromRoute route
+
+        requests =
+            { user = Api.User.getById user.credentials userId
+            , posts = Api.Post.listByUser user.credentials userId { limit = 10 }
+            }
+    in
     Page.new
-        { init = init user route
+        { init = init requests
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view requests (Shared.Model.store shared)
         }
         |> Page.withLayout (toLayout user)
 
@@ -42,26 +54,22 @@ type alias Data a =
     Loadable DetailedError a
 
 
-type alias Model =
-    { user : Data (User Api.User.Details)
-    , posts : Data (Paginated (Post Api.Post.Preview))
+type alias Requests =
+    { user : Request (User Api.User.Details)
+    , posts : Request (Paginated (Post Api.Post.Preview))
     }
 
 
-init : Auth.User -> Route { userId : String } -> () -> ( Model, Effect Msg )
-init user route () =
-    let
-        userId =
-            UserId.fromRoute route
-    in
-    ( { user = Loadable.loading
-      , posts = Loadable.loading
-      }
+type alias Model =
+    {}
+
+
+init : Requests -> () -> ( Model, Effect Msg )
+init requests () =
+    ( {}
     , Effect.batch
-        [ Effect.request (Api.User.getById user.credentials userId)
-            BackendRespondedToGetUser
-        , Effect.request (Api.Post.listByUser user.credentials userId { page = 1, limit = 10 })
-            BackendRespondedToGetPosts
+        [ Effect.sendStoreRequest CacheFirst requests.user
+        , Effect.sendStoreRequestPaginated NextPage requests.posts
         ]
     )
 
@@ -70,29 +78,13 @@ init user route () =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetUser (ApiResult (User Api.User.Details))
-    | BackendRespondedToGetPosts (ApiResult (Paginated (Post Api.Post.Preview)))
-    | NoOp
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        BackendRespondedToGetUser result ->
-            ( { model | user = Loadable.fromResult result }
-            , Effect.none
-            )
-
-        BackendRespondedToGetPosts result ->
-            ( { model | posts = Loadable.fromResult result }
-            , Effect.none
-            )
-
         NoOp ->
             ( model
             , Effect.none
@@ -112,9 +104,9 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    case Loadable.value model.user of
+view : Requests -> Store -> Model -> View Msg
+view requests store _ =
+    case Loadable.value (Store.get requests.user store) of
         Loadable.Empty ->
             { title = "Loading..."
             , body = [ viewSkeletonContent ]
@@ -134,7 +126,7 @@ view model =
 
         Loadable.Success user ->
             { title = Api.User.fullName user
-            , body = [ viewUser user model.posts ]
+            , body = [ viewUser user (Store.get requests.posts store) ]
             }
 
 
