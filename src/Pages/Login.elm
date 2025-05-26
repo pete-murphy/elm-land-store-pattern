@@ -210,6 +210,6 @@ loginForm errors =
         |> Form.field "password"
             (Field.text
                 |> Field.password
-                |> Field.withInitialValue (\_ -> "test123")
+                |> Field.withInitialValue (\_ -> "ThisIsThePasswordForTestUser")
                 |> Field.required "Required"
             )

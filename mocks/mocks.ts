@@ -228,7 +228,7 @@ const seedData = () => {
       return db.user.create({
         username: "testuser",
         email: "test@example.com",
-        password: hashPassword("test123"),
+        password: hashPassword("ThisIsThePasswordForTestUser"),
         firstName: "Test",
         lastName: "User",
         role: "user",
