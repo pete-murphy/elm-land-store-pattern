@@ -303,42 +303,44 @@ viewPreviewList posts =
 
 viewPreview : Post Preview -> Html msg
 viewPreview (Post internals _) =
-    Html.article
-        [ Html.Attributes.class "" ]
-        [ Html.header [ Html.Attributes.class "flex gap-4 justify-between items-start mb-3" ]
-            [ Html.div [ Html.Attributes.class "flex-1" ]
-                [ Html.h3 [ Html.Attributes.class "mb-1 text-lg font-semibold" ]
-                    [ Html.a
-                        [ Route.Path.href (Route.Path.Posts_Slug_ { slug = internals.slug })
-                        , Html.Attributes.class "underline underline-offset-2 decoration-2"
+    Html.li []
+        [ Html.article
+            [ Html.Attributes.class "" ]
+            [ Html.header [ Html.Attributes.class "flex gap-4 justify-between items-start mb-3" ]
+                [ Html.div [ Html.Attributes.class "flex-1" ]
+                    [ Html.h3 [ Html.Attributes.class "mb-1 text-lg font-semibold" ]
+                        [ Html.a
+                            [ Route.Path.href (Route.Path.Posts_Slug_ { slug = internals.slug })
+                            , Html.Attributes.class "underline underline-offset-2 decoration-2"
+                            ]
+                            [ Html.text internals.title ]
                         ]
-                        [ Html.text internals.title ]
-                    ]
-                , Html.div [ Html.Attributes.class "flex gap-2 items-center text-sm text-gray-600" ]
-                    [ Html.text ("by " ++ username internals.author)
-                    , Html.text " • "
-                    , Html.text (statusToString internals.status)
-                    , Html.text " • "
-                    , Html.text (String.fromInt internals.viewCount ++ " views")
+                    , Html.div [ Html.Attributes.class "flex gap-2 items-center text-sm text-gray-600" ]
+                        [ Html.text ("by " ++ username internals.author)
+                        , Html.text " • "
+                        , Html.text (statusToString internals.status)
+                        , Html.text " • "
+                        , Html.text (String.fromInt internals.viewCount ++ " views")
+                        ]
                     ]
                 ]
-            ]
-        , Html.p [ Html.Attributes.class "mb-3 text-gray-600" ]
-            [ Html.text internals.excerpt ]
-        , Html.footer [ Html.Attributes.class "flex justify-between items-center" ]
-            [ if List.isEmpty internals.tags then
-                Html.div [] []
+            , Html.p [ Html.Attributes.class "mb-3 text-gray-600" ]
+                [ Html.text internals.excerpt ]
+            , Html.footer [ Html.Attributes.class "flex justify-between items-center" ]
+                [ if List.isEmpty internals.tags then
+                    Html.div [] []
 
-              else
-                Tag.viewClickableList internals.tags
-            , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-600 text-end text-nowrap line-clamp-1" ]
-                (LocaleTime.new internals.createdAt
-                    |> LocaleTime.withTimeStyle Nothing
-                    |> LocaleTime.withLocaleAttrs []
-                    |> LocaleTime.withRelativeAttrs []
-                    |> LocaleTime.toHtml
-                    |> List.intersperse (Html.text " • ")
-                )
+                  else
+                    Tag.viewClickableList internals.tags
+                , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-600 text-end text-nowrap line-clamp-1" ]
+                    (LocaleTime.new internals.createdAt
+                        |> LocaleTime.withTimeStyle Nothing
+                        |> LocaleTime.withLocaleAttrs []
+                        |> LocaleTime.withRelativeAttrs []
+                        |> LocaleTime.toHtml
+                        |> List.intersperse (Html.text " • ")
+                    )
+                ]
             ]
         ]
 

@@ -61,7 +61,7 @@ view tag =
         tagId =
             TagId.toString tag.id
     in
-    Html.div
+    Html.li
         [ Html.Attributes.class "flex gap-2 items-center py-0.5 px-2 text-xs font-medium rounded text-[color-mix(in_oklch,var(--color)_25%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_10%,oklch(100%_0_0))]"
         , Html.Attributes.attribute "style" ("--color:" ++ tag.color)
         ]
@@ -75,12 +75,14 @@ viewClickable tag =
         tagId =
             TagId.toString tag.id
     in
-    Html.a
-        [ Route.Path.href (Route.Path.Tags_TagId_ { tagId = tagId })
-        , Html.Attributes.class "flex gap-2 items-center py-0.5 px-2 text-xs font-medium rounded text-[color-mix(in_oklch,var(--color)_25%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_10%,oklch(100%_0_0))] hover:bg-[color-mix(in_oklch,var(--color)_15%,oklch(100%_0_0))] transition-colors"
-        , Html.Attributes.attribute "style" ("--color:" ++ tag.color)
-        ]
-        [ Html.text tagId
+    Html.li []
+        [ Html.a
+            [ Route.Path.href (Route.Path.Tags_TagId_ { tagId = tagId })
+            , Html.Attributes.class "flex gap-2 items-center py-0.5 px-2 text-xs font-medium rounded text-[color-mix(in_oklch,var(--color)_25%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_10%,oklch(100%_0_0))] hover:bg-[color-mix(in_oklch,var(--color)_15%,oklch(100%_0_0))] transition-colors"
+            , Html.Attributes.attribute "style" ("--color:" ++ tag.color)
+            ]
+            [ Html.text tagId
+            ]
         ]
 
 
