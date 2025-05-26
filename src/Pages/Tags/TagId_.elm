@@ -3,7 +3,7 @@ module Pages.Tags.TagId_ exposing (Model, Msg, page)
 import Api.Post exposing (Post)
 import Api.TagId as TagId
 import Auth
-import CustomElements
+import Components.IntersectionObservee as IntersectionObservee
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
@@ -172,10 +172,9 @@ viewPostsSection postsData =
             else
                 Html.div [ Attributes.class "flex flex-col gap-4" ]
                     [ Api.Post.viewPreviewList paginatedPosts.data
-                    , CustomElements.intersectionSentinel
-                        { onIntersect = UserScrolledToBottom
-                        , disabled = Loadable.isLoading postsData
-                        }
+                    , IntersectionObservee.new UserScrolledToBottom
+                        |> IntersectionObservee.withDisabled (Loadable.isLoading postsData)
+                        |> IntersectionObservee.toHtml
                     , if Loadable.isLoading postsData then
                         viewSkeletonContent
 

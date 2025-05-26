@@ -63,7 +63,7 @@ export function init() {
   );
 
   customElements.define(
-    "intersection-sentinel",
+    "intersection-observee",
     class extends HTMLElement {
       observer: IntersectionObserver;
       constructor() {

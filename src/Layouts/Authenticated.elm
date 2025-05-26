@@ -109,20 +109,20 @@ view props shared currentRoute { toContentMsg, content } =
                     [ viewUserInfo props.user.credentials
                     , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
                         [ Button.new
+                            |> Button.withVariantSecondary
+                            |> Button.withText "Renew"
+                            |> Button.withTrailingIcon Path.arrowPath
                             |> Button.withOnClick UserClickedRenew
                             |> Button.withSizeSmall
-                            |> Button.withVariantSecondary
-                            |> Button.withTrailingIcon Path.arrowPath
                             |> Button.withLoading (Loadable.isLoading shared.credentials)
-                            |> Button.withText "Renew"
                             |> Button.toHtml
                         , Button.new
+                            |> Button.withVariantSecondary
+                            |> Button.withText "Log out"
+                            |> Button.withTrailingIcon Path.arrowRightStartOnRectangle
                             |> Button.withOnClick UserClickedLogOut
                             |> Button.withSizeSmall
-                            |> Button.withVariantSecondary
-                            |> Button.withTrailingIcon Path.arrowRightStartOnRectangle
                             |> Button.withLoading (Loadable.isLoading shared.logout)
-                            |> Button.withText "Log out"
                             |> Button.toHtml
                         ]
                     ]

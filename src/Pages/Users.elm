@@ -3,7 +3,7 @@ module Pages.Users exposing (Model, Msg, page)
 import Api.User exposing (Preview, User)
 import Auth
 import Auth.Credentials exposing (Credentials)
-import CustomElements
+import Components.IntersectionObservee as IntersectionObservee
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
@@ -150,10 +150,9 @@ viewUsersSection usersData =
         Loadable.Success paginatedUsers ->
             Html.div [ Attributes.class "flex flex-col gap-4" ]
                 [ Api.User.viewPreviewList paginatedUsers.data
-                , CustomElements.intersectionSentinel
-                    { onIntersect = UserScrolledToBottom
-                    , disabled = Loadable.isLoading usersData
-                    }
+                , IntersectionObservee.new UserScrolledToBottom
+                    |> IntersectionObservee.withDisabled (Loadable.isLoading usersData)
+                    |> IntersectionObservee.toHtml
                 , if Loadable.isLoading usersData then
                     viewSkeletonContent
 

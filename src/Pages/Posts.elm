@@ -6,8 +6,8 @@ import Auth.Credentials exposing (Credentials)
 import Components.Button as Button
 import Components.ErrorSummary as ErrorSummary
 import Components.Icon.Path as Path
+import Components.IntersectionObservee as IntersectionObservee exposing (IntersectionObservee)
 import Components.Modal as Modal
-import CustomElements
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Form
@@ -376,10 +376,9 @@ viewPostsSection postsData =
         Loadable.Success paginatedPosts ->
             Html.div [ Attributes.class "flex flex-col gap-4" ]
                 [ Api.Post.viewPreviewList paginatedPosts.data
-                , CustomElements.intersectionSentinel
-                    { onIntersect = UserScrolledToBottom
-                    , disabled = Loadable.isLoading postsData
-                    }
+                , IntersectionObservee.new UserScrolledToBottom
+                    |> IntersectionObservee.withDisabled (Loadable.isLoading postsData)
+                    |> IntersectionObservee.toHtml
                 , if Loadable.isLoading postsData then
                     viewSkeletonContent
 
