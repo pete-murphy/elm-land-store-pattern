@@ -14,6 +14,7 @@ import Page exposing (Page)
 import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Store exposing (PaginatedStrategy(..))
 import View exposing (View)
 
 
@@ -52,8 +53,8 @@ init user _ _ =
     ( { users = Loadable.loading
       , credentials = user.credentials
       }
-    , Effect.request (Api.User.list user.credentials { page = 1, limit = 10 })
-        BackendRespondedToGetUsers
+    , Effect.sendStoreRequestPaginated NextPage
+        (Api.User.list user.credentials { limit = 10 })
     )
 
 
@@ -61,54 +62,19 @@ init user _ _ =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetUsers (ApiResult (Paginated (User Preview)))
-    | UserScrolledToBottom
+    = UserScrolledToBottom
     | NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        BackendRespondedToGetUsers result ->
-            ( { model
-                | users =
-                    case Loadable.value model.users of
-                        Loadable.Empty ->
-                            Loadable.fromResult result
-
-                        _ ->
-                            Loadable.succeed Paginated.merge
-                                |> Loadable.andMap model.users
-                                |> Loadable.andMap (Loadable.fromResult result)
-                                |> Loadable.toNotLoading
-              }
-            , Effect.none
-            )
-
         UserScrolledToBottom ->
-            case Loadable.value model.users of
-                Loadable.Success paginatedUsers ->
-                    if paginatedUsers.pagination.hasNextPage then
-                        ( { model | users = Loadable.toLoading model.users }
-                        , Effect.request
-                            (Api.User.list model.credentials
-                                { page = paginatedUsers.pagination.page + 1
-                                , limit = paginatedUsers.pagination.limit
-                                }
-                            )
-                            BackendRespondedToGetUsers
-                        )
-
-                    else
-                        ( model, Effect.none )
-
-                _ ->
-                    ( model, Effect.none )
+            ( model
+            , Effect.sendStoreRequestPaginated NextPage
+                (Api.User.list model.credentials { limit = 10 })
+            )
 
         NoOp ->
             ( model, Effect.none )

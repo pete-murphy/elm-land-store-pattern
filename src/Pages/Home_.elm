@@ -1,8 +1,8 @@
 module Pages.Home_ exposing (Data, Model, Msg, page)
 
-import Api.Post as Post exposing (Post)
-import Api.Tag as Tag exposing (Tag)
-import Api.User as User exposing (User)
+import Api.Post as Post
+import Api.Tag as Tag
+import Api.User as User
 import Auth
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -11,9 +11,10 @@ import Http.DetailedError as DetailedError exposing (DetailedError)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
-import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
+import Shared.Model
+import Store exposing (PaginatedStrategy(..), Strategy(..))
 import View exposing (View)
 
 
@@ -22,7 +23,7 @@ page user shared _ =
     Page.new
         { init = init user shared
         , update = update
-        , view = view
+        , view = view user shared
         , subscriptions = subscriptions
         }
         |> Page.withLayout (toLayout user)
@@ -42,25 +43,19 @@ type alias Data a =
 
 
 type alias Model =
-    { tags : Data (List Tag)
-    , users : Data (List (User User.Preview))
-    , posts : Data (List (Post Post.Preview))
-    }
+    {}
 
 
 init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
 init user _ _ =
-    ( { tags = Loadable.loading
-      , users = Loadable.loading
-      , posts = Loadable.loading
-      }
+    ( {}
     , Effect.batch
-        [ Effect.request (Tag.get user.credentials)
-            BackendRespondedToGetTags
-        , Effect.request (User.list user.credentials { page = 1, limit = 5 })
-            BackendRespondedToGetUsers
-        , Effect.request (Post.list user.credentials { limit = 5, status = Nothing, search = Nothing })
-            BackendRespondedToGetPosts
+        [ Effect.sendStoreRequest StaleWhileRevalidate
+            (Tag.get user.credentials)
+        , Effect.sendStoreRequestPaginated Reset
+            (User.list user.credentials { limit = 5 })
+        , Effect.sendStoreRequestPaginated Reset
+            (Post.list user.credentials { limit = 5, status = Nothing, search = Nothing })
         ]
     )
 
@@ -69,35 +64,13 @@ init user _ _ =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetTags (ApiResult (List Tag))
-    | BackendRespondedToGetUsers (ApiResult (Paginated (User User.Preview)))
-    | BackendRespondedToGetPosts (ApiResult (Paginated (Post Post.Preview)))
-    | NoOp
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        BackendRespondedToGetTags result ->
-            ( { model | tags = Loadable.fromResult result }
-            , Effect.none
-            )
-
-        BackendRespondedToGetUsers result ->
-            ( { model | users = Loadable.fromResult (result |> Result.map .data) }
-            , Effect.none
-            )
-
-        BackendRespondedToGetPosts result ->
-            ( { model | posts = Loadable.fromResult (result |> Result.map .data) }
-            , Effect.none
-            )
-
         NoOp ->
             ( model, Effect.none )
 
@@ -115,24 +88,37 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : Auth.User -> Shared.Model -> Model -> View Msg
+view user shared _ =
+    let
+        store =
+            Shared.Model.store shared
+
+        tags =
+            Store.get (Tag.get user.credentials) store.unpaginated
+
+        users =
+            Store.getAll (User.list user.credentials { limit = 5 }) store.paginated
+
+        posts =
+            Store.getAll (Post.list user.credentials { limit = 5, status = Nothing, search = Nothing }) store.paginated
+    in
     { title = "Home"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
             [ viewSection
                 { title = "Tags"
-                , apiData = model.tags
+                , apiData = tags
                 , view = Tag.viewList
                 }
             , viewSection
                 { title = "Users"
-                , apiData = model.users
+                , apiData = users
                 , view = User.viewPreviewList
                 }
             , viewSection
                 { title = "Posts"
-                , apiData = model.posts
+                , apiData = posts
                 , view = Post.viewPreviewList
                 }
             ]

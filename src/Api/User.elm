@@ -114,13 +114,12 @@ roleDecoder =
 
 list :
     Credentials
-    -> { page : Int, limit : Int }
+    -> { limit : Int }
     -> Request (Paginated (User Preview))
-list credentials { page, limit } =
+list credentials { limit } =
     let
         queryParams =
-            [ Url.Builder.int "page" page
-            , Url.Builder.int "limit" limit
+            [ Url.Builder.int "limit" limit
             ]
 
         -- ++ (case search of
