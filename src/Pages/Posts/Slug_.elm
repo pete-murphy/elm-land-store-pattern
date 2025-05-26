@@ -214,7 +214,7 @@ viewComments commentsData =
 
             Loadable.Success paginatedComments ->
                 if List.isEmpty paginatedComments.data then
-                    Html.p [ Attributes.class "text-gray-500 italic" ]
+                    Html.p [ Attributes.class "italic text-gray-500" ]
                         [ Html.text "No comments yet." ]
 
                 else

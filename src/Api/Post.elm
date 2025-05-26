@@ -319,7 +319,7 @@ delete credentials postId =
 viewPreviewList : List (Post Preview) -> Html msg
 viewPreviewList posts =
     Html.ul [ Html.Attributes.class "flex flex-col gap-8" ]
-        (List.map viewPreview posts)
+        (List.map viewPreview (List.take 40 posts))
 
 
 viewPreview : Post Preview -> Html msg
@@ -336,7 +336,7 @@ viewPreview (Post internals _) =
                             ]
                             [ Html.text internals.title ]
                         ]
-                    , Html.div [ Html.Attributes.class "flex gap-2 items-center text-sm text-gray-600" ]
+                    , Html.div [ Html.Attributes.class "overflow-hidden gap-2 items-center text-sm text-gray-600 lex-wrap line-clamp-1 text-ellipsis" ]
                         [ Html.text ("by " ++ username internals.author)
                         , Html.text " • "
                         , Html.text (statusToString internals.status)
@@ -347,13 +347,13 @@ viewPreview (Post internals _) =
                 ]
             , Html.p [ Html.Attributes.class "mb-3 text-gray-600" ]
                 [ Html.text internals.excerpt ]
-            , Html.footer [ Html.Attributes.class "flex justify-between items-center" ]
+            , Html.footer [ Html.Attributes.class "flex flex-wrap gap-2 justify-between items-center" ]
                 [ if List.isEmpty internals.tags then
                     Html.div [] []
 
                   else
                     Tag.viewClickableList internals.tags
-                , Html.div [ Html.Attributes.class "flex gap-1 text-sm text-gray-600 text-end text-nowrap line-clamp-1" ]
+                , Html.div [ Html.Attributes.class "gap-1 text-sm text-gray-600 text-balance overflow-ellipsis text-end line-clamp-2" ]
                     (LocaleTime.new internals.createdAt
                         |> LocaleTime.withTimeStyle Nothing
                         |> LocaleTime.withLocaleAttrs []

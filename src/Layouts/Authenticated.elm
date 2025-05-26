@@ -107,7 +107,7 @@ view props shared currentRoute { toContentMsg, content } =
                 ([ viewNav currentRoute
                  , Html.div [ Attributes.class "grid gap-8 self-end" ]
                     [ viewUserInfo props.user.credentials
-                    , Html.div [ Attributes.class "flex gap-2 flex-wrap" ]
+                    , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
                         [ Button.new
                             |> Button.withOnClick UserClickedRenew
                             |> Button.withSizeSmall
@@ -162,8 +162,8 @@ viewUserInfo credentials =
 
                     displayTime posix =
                         LocaleTime.new posix
-                            |> LocaleTime.withRelativeAttrs [ Attributes.class "text-xs overflow-hidden text-ellipsis line-clamp-1" ]
-                            |> LocaleTime.withLocaleAttrs [ Attributes.class "text-xs sm:text-sm overflow-hidden text-ellipsis line-clamp-1" ]
+                            |> LocaleTime.withRelativeAttrs [ Attributes.class "overflow-hidden text-xs text-ellipsis line-clamp-1" ]
+                            |> LocaleTime.withLocaleAttrs [ Attributes.class "overflow-hidden text-xs sm:text-sm text-ellipsis line-clamp-1" ]
                             |> LocaleTime.toHtml
                             |> Html.div [ Attributes.class "grid overflow-hidden text-ellipsis line-clamp-1" ]
 
@@ -179,7 +179,7 @@ viewUserInfo credentials =
                             Html.div [ Attributes.class "grid" ]
                                 [ Html.dd [ Attributes.class "text-sm font-semibold" ]
                                     [ Html.text label ]
-                                , Html.dt [ Attributes.class "max-w-prose line-clamp-1 overflow-hidden text-ellipsis" ] [ value ]
+                                , Html.dt [ Attributes.class "overflow-hidden max-w-prose line-clamp-1 text-ellipsis" ] [ value ]
                                 ]
                         )
                 )
@@ -196,7 +196,7 @@ viewNav currentRoute =
     let
         navLink path =
             Html.a
-                (Attributes.class "relative p-2 font-semibold rounded-md active:transition aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:transition-all before:h-4 before:bg-gray-800/0 before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 hover:not-aria-[current=page]:before:bg-gray-800/25 hover:before:h-[calc(100%-0.5rem)] flex items-center gap-2"
+                (Attributes.class "flex relative gap-2 items-center p-2 font-semibold rounded-md active:transition aria-[current=page]:before:bg-gray-800 before:size-1 before:absolute before:rounded-full before:transition-all before:h-4 before:bg-gray-800/0 before:top-1/2 before:-left-1 before:-translate-x-1/2 before:-translate-y-1/2 hover:not-aria-[current=page]:before:bg-gray-800/25 hover:before:h-[calc(100%-0.5rem)]"
                     :: (if path == currentRoute.path then
                             [ Aria.currentPage ]
 
@@ -215,7 +215,7 @@ viewNav currentRoute =
                 |> List.map
                     (\( iconPath, path, text ) ->
                         Html.li [ Attributes.class "group" ]
-                            [ navLink path [ Icon.view Icon.Regular [ Svg.Attributes.class "text-gray-400 group-hover:text-gray-600 transition group-has-aria-[current=page]:text-gray-800" ] iconPath, Html.text text ]
+                            [ navLink path [ Icon.view Icon.Regular [ Svg.Attributes.class "text-gray-400 transition group-hover:text-gray-600 group-has-aria-[current=page]:text-gray-800" ] iconPath, Html.text text ]
                             ]
                     )
             )

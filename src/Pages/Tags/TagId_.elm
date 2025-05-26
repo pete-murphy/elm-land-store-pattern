@@ -140,7 +140,7 @@ view route model =
                         [ Html.text "← Back to all tags" ]
                     ]
                 , Html.div []
-                    [ Html.p [ Attributes.class "text-gray-600 mt-2" ]
+                    [ Html.p [ Attributes.class "mt-2 text-gray-600" ]
                         [ Html.text "Browse all posts in this category." ]
                     ]
                 ]
@@ -157,13 +157,13 @@ viewPostsSection postsData =
             viewSkeletonContent
 
         Loadable.Failure error ->
-            Html.div [ Attributes.class "p-4 bg-red-50 border border-red-200 rounded-lg text-red-700" ]
+            Html.div [ Attributes.class "p-4 text-red-700 bg-red-50 rounded-lg border border-red-200" ]
                 [ Html.text ("Error loading posts: " ++ DetailedError.toString error) ]
 
         Loadable.Success paginatedPosts ->
             if List.isEmpty paginatedPosts.data then
-                Html.div [ Attributes.class "text-center py-12" ]
-                    [ Html.div [ Attributes.class "text-gray-400 mb-4 text-4xl" ]
+                Html.div [ Attributes.class "py-12 text-center" ]
+                    [ Html.div [ Attributes.class "mb-4 text-4xl text-gray-400" ]
                         [ Html.text "📝" ]
                     , Html.p [ Attributes.class "text-gray-600" ]
                         [ Html.text "No posts found for this tag yet." ]

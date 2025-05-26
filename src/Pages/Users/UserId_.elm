@@ -214,7 +214,7 @@ viewPostsSection postsData =
 
         Loadable.Success paginatedPosts ->
             if List.isEmpty paginatedPosts.data then
-                Html.div [ Attributes.class "text-center py-8 text-gray-500" ]
+                Html.div [ Attributes.class "py-8 text-center text-gray-500" ]
                     [ Html.text "No posts yet" ]
 
             else
