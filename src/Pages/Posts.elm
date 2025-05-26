@@ -224,19 +224,6 @@ createPostForm errors =
                 |> Validation.andMap content
                 |> Validation.andMap excerpt
                 |> Validation.andMap status
-
-        -- (status
-        --     |> Validation.andThen
-        --         (\statusString ->
-        --             case statusString of
-        --                 "draft" ->
-        --                     Validation.succeed Api.Post.Draft
-        --                 "published" ->
-        --                     Validation.succeed Api.Post.Published
-        --                 _ ->
-        --                     Validation.fail "Invalid status" status
-        --         )
-        -- )
         , view =
             \context ->
                 let
@@ -274,11 +261,6 @@ createPostForm errors =
                 [ fieldView "Title" title []
                 , fieldView "Content" content [ Attributes.class "field-sizing-content min-h-[4.5rlh]" ]
                 , fieldView "Excerpt" excerpt [ Attributes.class "field-sizing-content min-h-[4.5rlh]" ]
-
-                -- [ FieldView.select []
-                --         (\entry -> ( [], sizeToString entry ))
-                --         size
-                --     ]
                 , Html.div [ Attributes.class "grid relative gap-1" ]
                     [ FieldView.radio []
                         (\status_ toRadio ->

@@ -1,4 +1,4 @@
-module Shared.Msg exposing (Msg(..))
+module Shared.Msg exposing (ApiResult, Msg(..))
 
 {-| -}
 
@@ -8,7 +8,6 @@ import Http.DetailedError exposing (DetailedError)
 import Json.Encode as Encode
 import Paginated exposing (Paginated)
 import Store exposing (PaginatedStrategy, Strategy)
-import Store.Request
 
 
 {-| Normally, this value would live in "Shared.elm"
@@ -26,10 +25,10 @@ type Msg
     | BackendRespondedToRenewToken (ApiResult RefreshResponse)
     | BackendRespondedToLogout (ApiResult ())
       -- STORE
-    | StoreRequest Strategy (Store.Request.Msg ())
-    | StoreRequestPaginated PaginatedStrategy (Store.Request.Msg Paginated.Config)
-    | StoreResponse (Store.Request.Msg ()) (ApiResult Encode.Value)
-    | StoreResponsePaginated (Store.Request.Msg Paginated.Config) (ApiResult (Paginated Encode.Value))
+    | StoreRequest Strategy Store.Msg
+    | StoreRequestPaginated PaginatedStrategy Store.Msg
+    | StoreResponse Store.Msg (ApiResult Encode.Value)
+    | StoreResponsePaginated Store.Msg (ApiResult (Paginated Encode.Value))
       -- NOOP
     | NoOp
 

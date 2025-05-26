@@ -36,6 +36,8 @@ port module Effect exposing
 
 -}
 
+-- import Store.Request
+
 import Api.Auth exposing (LoginRequest)
 import Browser.Navigation
 import Dict exposing (Dict)
@@ -48,7 +50,6 @@ import Route.Path
 import Shared.Model
 import Shared.Msg
 import Store
-import Store.Request
 import Task
 import Url exposing (Url)
 
@@ -230,18 +231,22 @@ requestNoContent req toMsg =
 -- STORE
 
 
-sendStoreRequest : Store.Strategy -> Store.Request.Request () a -> Effect msg
-sendStoreRequest strategy =
-    Store.Request.msg
-        >> Shared.Msg.StoreRequest strategy
-        >> SendSharedMsg
+sendStoreRequest : Store.Strategy -> Http.Extra.Request a -> Effect msg
+sendStoreRequest strategy req =
+    Shared.Msg.StoreRequest strategy
+        { url = req.url
+        , headers = req.headers
+        }
+        |> SendSharedMsg
 
 
-sendStoreRequestPaginated : Store.PaginatedStrategy -> Store.Request.Request Paginated.Config a -> Effect msg
-sendStoreRequestPaginated strategy =
-    Store.Request.msg
-        >> Shared.Msg.StoreRequestPaginated strategy
-        >> SendSharedMsg
+sendStoreRequestPaginated : Store.PaginatedStrategy -> Http.Extra.Request (Paginated.Paginated a) -> Effect msg
+sendStoreRequestPaginated strategy req =
+    Shared.Msg.StoreRequestPaginated strategy
+        { url = req.url
+        , headers = req.headers
+        }
+        |> SendSharedMsg
 
 
 

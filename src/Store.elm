@@ -1,31 +1,37 @@
 module Store exposing (..)
 
+-- import Store.Request as Request exposing (Key, Request)
+
 import Dict exposing (Dict)
 import Http
 import Http.DetailedError as DetailedError exposing (DetailedError)
-import Http.Extra
+import Http.Extra exposing (Request)
 import Json.Decode
 import Json.Encode as Encode
 import Loadable exposing (Loadable)
 import Paginated exposing (Paginated)
-import Result.Extra
-import Store.Request as Request exposing (Key, Request)
 import Url.Builder
 
 
 type alias Store a =
-    Dict Key (Loadable DetailedError a)
+    Dict String (Loadable DetailedError a)
+
+
+type alias Msg =
+    { url : String
+    , headers : List Http.Header
+    }
 
 
 handleRequest :
     Strategy
-    -> Request.Msg ()
+    -> Msg
     -> Store Encode.Value
-    -> ( Store Encode.Value, Maybe (Http.Extra.Request Encode.Value) )
+    -> ( Store Encode.Value, Maybe (Request Encode.Value) )
 handleRequest strategy request store =
     let
         key =
-            Request.key request
+            request.url
 
         newStoreUpdate =
             Dict.update key
@@ -38,13 +44,11 @@ handleRequest strategy request store =
         newStoreInsert =
             Dict.insert key Loadable.loading store
 
-        req : Http.Extra.Request Encode.Value
+        req : Request Encode.Value
         req =
             { method = "GET"
-            , headers = Request.headers request
-            , url =
-                Url.Builder.absolute (Request.pathSegments request)
-                    (Request.queryParams request)
+            , headers = request.headers
+            , url = request.url
             , body = Http.emptyBody
             , decoder = Json.Decode.value
             }
@@ -65,16 +69,13 @@ handleRequest strategy request store =
 
 handleRequestPaginated :
     PaginatedStrategy
-    -> Request.Msg Paginated.Config
+    -> Msg
     -> Store (Paginated Encode.Value)
-    -> ( Store (Paginated Encode.Value), Maybe (Http.Extra.Request (Paginated Encode.Value)) )
+    -> ( Store (Paginated Encode.Value), Maybe (Request (Paginated Encode.Value)) )
 handleRequestPaginated strategy request store =
     let
         key =
-            Request.key request
-
-        config =
-            Request.config request
+            request.url
 
         lastFetched =
             Dict.get key store
@@ -85,9 +86,7 @@ handleRequestPaginated strategy request store =
                 ( Just { hasNextPage, page }, NextPage ) ->
                     if hasNextPage then
                         Just
-                            [ Url.Builder.int "page" (page + 1)
-                            , Url.Builder.int "per_page" config.perPage
-                            ]
+                            [ Url.Builder.int "page" (page + 1) ]
 
                     else
                         {- Nothing means we've fetched all pages -}
@@ -95,9 +94,7 @@ handleRequestPaginated strategy request store =
 
                 _ ->
                     Just
-                        [ Url.Builder.int "page" 1
-                        , Url.Builder.int "per_page" config.perPage
-                        ]
+                        [ Url.Builder.int "page" 1 ]
     in
     case maybePaginationParams of
         Nothing ->
@@ -114,13 +111,17 @@ handleRequestPaginated strategy request store =
                         )
                         store
 
-                req : Http.Extra.Request (Paginated Encode.Value)
+                req : Request (Paginated Encode.Value)
                 req =
                     { method = "GET"
-                    , headers = Request.headers request
+                    , headers = request.headers
                     , url =
-                        Url.Builder.absolute (Request.pathSegments request)
-                            (Request.queryParams request ++ paginationParams)
+                        -- HACK
+                        if String.contains "?" request.url then
+                            request.url ++ "&" ++ Url.Builder.toQuery paginationParams
+
+                        else
+                            request.url ++ "?" ++ Url.Builder.toQuery paginationParams
                     , body = Http.emptyBody
                     , decoder = Paginated.decoder Json.Decode.value
                     }
@@ -129,27 +130,27 @@ handleRequestPaginated strategy request store =
 
 
 handleResponse :
-    Request.Msg ()
+    Msg
     -> Result DetailedError Encode.Value
     -> Store Encode.Value
     -> Store Encode.Value
 handleResponse request response store =
     let
         key =
-            Request.key request
+            request.url
     in
     Dict.insert key (Loadable.fromResult response) store
 
 
 handleResponsePaginated :
-    Request.Msg Paginated.Config
+    Msg
     -> Result DetailedError (Paginated Encode.Value)
     -> Store (Paginated Encode.Value)
     -> Store (Paginated Encode.Value)
 handleResponsePaginated request response store =
     let
         key =
-            Request.key request
+            request.url
     in
     Dict.update key
         (Maybe.map
@@ -202,40 +203,41 @@ type PaginatedStrategy
 
 
 get :
-    Request () a
+    Request a
     -> Store Encode.Value
     -> Loadable DetailedError a
 get request store =
     let
-        key =
-            Request.key (Request.msg request)
+        url =
+            request.url
 
         maybeData =
-            Dict.get key store
+            Dict.get url store
     in
     maybeData
         |> Maybe.withDefault Loadable.notAsked
         |> Loadable.andThen
-            (Json.Decode.decodeValue (Request.decoder request)
+            (Json.Decode.decodeValue request.decoder
                 >> Result.mapError DetailedError.BadBody
                 >> Loadable.fromResult
             )
 
 
 getAll :
-    Request Paginated.Config a
+    Request (Paginated a)
     -> Store (Paginated Encode.Value)
     -> Loadable DetailedError (List a)
 getAll request store =
     let
-        key =
-            Request.key (Request.msg request)
+        url =
+            request.url
     in
-    Dict.get key store
+    Dict.get url store
         |> Maybe.withDefault Loadable.notAsked
         |> Loadable.andThen
-            (.data
-                >> Result.Extra.combineMap (Json.Decode.decodeValue (Request.decoder request))
+            (Paginated.encode {- TODOn't -} identity
+                >> Json.Decode.decodeValue request.decoder
                 >> Result.mapError DetailedError.BadBody
                 >> Loadable.fromResult
             )
+        |> Loadable.map .data

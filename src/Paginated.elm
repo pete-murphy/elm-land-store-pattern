@@ -3,6 +3,7 @@ module Paginated exposing (..)
 import Http
 import Json.Decode
 import Json.Decode.Pipeline
+import Json.Encode
 import Url.Builder
 
 
@@ -39,6 +40,26 @@ decoder decoderA =
     Json.Decode.succeed Paginated
         |> Json.Decode.Pipeline.required "data" (Json.Decode.list decoderA)
         |> Json.Decode.Pipeline.required "pagination" paginationDecoder
+
+
+encode : (a -> Json.Encode.Value) -> Paginated a -> Json.Encode.Value
+encode encodeA paginated =
+    Json.Encode.object
+        [ ( "data", Json.Encode.list encodeA paginated.data )
+        , ( "pagination", paginationEncode paginated.pagination )
+        ]
+
+
+paginationEncode : Pagination -> Json.Encode.Value
+paginationEncode pagination =
+    Json.Encode.object
+        [ ( "page", Json.Encode.int pagination.page )
+        , ( "limit", Json.Encode.int pagination.limit )
+        , ( "totalPages", Json.Encode.int pagination.totalPages )
+        , ( "totalCount", Json.Encode.int pagination.totalCount )
+        , ( "hasNextPage", Json.Encode.bool pagination.hasNextPage )
+        , ( "hasPreviousPage", Json.Encode.bool pagination.hasPreviousPage )
+        ]
 
 
 paginationDecoder : Json.Decode.Decoder Pagination
