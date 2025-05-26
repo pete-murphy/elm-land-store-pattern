@@ -32,6 +32,7 @@ module Api.Post exposing
 import Accessibility as Html exposing (Html)
 import Api.Slug as Slug exposing (Slug)
 import Api.Tag as Tag exposing (Tag)
+import Api.TagId as TagId exposing (TagId)
 import Api.User as User exposing (User)
 import Auth.Credentials as Credentials exposing (Credentials)
 import Components.LocaleTime as LocaleTime
@@ -175,15 +176,15 @@ list credentials params =
 
 listByTag :
     Credentials
-    -> String
+    -> TagId
     -> { page : Int, limit : Int }
     -> Request (Paginated (Post Preview))
-listByTag credentials tagSlug params =
+listByTag credentials tagId params =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
     , url =
         Url.Builder.absolute
-            [ "api", "tags", tagSlug, "posts" ]
+            [ "api", "tags", TagId.toString tagId, "posts" ]
             [ Url.Builder.int "page" params.page
             , Url.Builder.int "limit" params.limit
             ]

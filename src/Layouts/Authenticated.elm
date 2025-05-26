@@ -102,12 +102,12 @@ view :
 view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
-        [ Html.div [ Attributes.class "grid mx-auto max-w-4xl grid-cols-[min(40%,20rem)_1fr]" ]
+        [ Html.div [ Attributes.class "grid mx-auto max-w-4xl grid-cols-[min(35%,20rem)_1fr]" ]
             [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-8 h-dvh" ]
                 ([ viewNav currentRoute
                  , Html.div [ Attributes.class "grid gap-8 self-end" ]
                     [ viewUserInfo props.user.credentials
-                    , Html.div [ Attributes.class "flex gap-2" ]
+                    , Html.div [ Attributes.class "flex gap-2 flex-wrap" ]
                         [ Button.new
                             |> Button.withOnClick UserClickedRenew
                             |> Button.withSizeSmall
@@ -162,9 +162,10 @@ viewUserInfo credentials =
 
                     displayTime posix =
                         LocaleTime.new posix
-                            |> LocaleTime.withRelativeAttrs [ Attributes.class "text-xs" ]
+                            |> LocaleTime.withRelativeAttrs [ Attributes.class "text-xs overflow-hidden text-ellipsis line-clamp-1" ]
+                            |> LocaleTime.withLocaleAttrs [ Attributes.class "text-xs sm:text-sm overflow-hidden text-ellipsis line-clamp-1" ]
                             |> LocaleTime.toHtml
-                            |> Html.div [ Attributes.class "grid" ]
+                            |> Html.div [ Attributes.class "grid overflow-hidden text-ellipsis line-clamp-1" ]
 
                     items =
                         [ ( "Logged in", Html.text (User.username user ++ " (" ++ User.email user ++ ")") )
@@ -178,7 +179,7 @@ viewUserInfo credentials =
                             Html.div [ Attributes.class "grid" ]
                                 [ Html.dd [ Attributes.class "text-sm font-semibold" ]
                                     [ Html.text label ]
-                                , Html.dt [ Attributes.class "max-w-prose line-clamp-1" ] [ value ]
+                                , Html.dt [ Attributes.class "max-w-prose line-clamp-1 overflow-hidden text-ellipsis" ] [ value ]
                                 ]
                         )
                 )

@@ -309,7 +309,7 @@ Get all tags.
   - `search` (string) - Search tag names
 - **Response**: Tag array
 
-#### `GET /api/tags/:slug/posts`
+#### `GET /api/tags/:id/posts`
 
 Get posts by tag (paginated).
 

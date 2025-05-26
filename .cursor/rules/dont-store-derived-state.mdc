@@ -1,0 +1,73 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Don't store data that can be derived from page's arguments in the model.
+
+❌ Bad:
+
+```elm
+page : Auth.User -> Shared.Model -> Route { slug : String } -> Page Model Msg
+page user shared route =
+    Page.new
+        { init = init user route
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+
+-- INIT
+
+
+type alias Model =
+    { posts : Data (Paginated (Post Api.Post.Preview))
+    , credentials : Credentials
+    }
+
+
+init : Auth.User -> Route { slug : String } -> () -> ( Model, Effect Msg )
+init user route _ =
+    ( { posts = Loadable.loading
+      , credentials = user.credentials
+      }
+    , -- ...
+    )
+
+update model =
+    --- ...
+    Api.Post.get model.credentials -- ...
+```
+
+
+✅ Good:
+
+```elm
+page : Auth.User -> Shared.Model -> Route { slug : String } -> Page Model Msg
+page user shared route =
+    Page.new
+        { init = init user route
+        , update = update user
+        , view = view user
+        , subscriptions = subscriptions
+        }
+
+-- INIT
+
+
+type alias Model =
+    { posts : Data (Paginated (Post Api.Post.Preview))
+    }
+
+
+init : Auth.User -> Route { slug : String } -> () -> ( Model, Effect Msg )
+init user route _ =
+    ( { posts = Loadable.loading
+      }
+    , -- ...
+    )
+
+update user =
+    --- ...
+    Api.Post.get user.credentials -- ...
+```

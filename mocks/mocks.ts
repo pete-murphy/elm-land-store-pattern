@@ -1207,14 +1207,14 @@ export const handlers = (apiBase?: string, delayMs: number = 0) => {
     }),
 
     // Get posts by tag
-    http.get(`${API_BASE}/tags/:slug/posts`, async ({ params, request }) => {
+    http.get(`${API_BASE}/tags/:name/posts`, async ({ params, request }) => {
       await delay(delayMs);
       const url = new URL(request.url);
       const { page, limit, skip, take } = getPaginationParams(url);
 
       const posts = db.post.findMany({
         where: {
-          tags: { slug: { equals: params.slug as string } },
+          tags: { name: { equals: params.name as string } },
           status: { equals: "published" },
         },
         skip,
@@ -1224,7 +1224,7 @@ export const handlers = (apiBase?: string, delayMs: number = 0) => {
 
       const totalCount = db.post.count({
         where: {
-          tags: { slug: { equals: params.slug as string } },
+          tags: { name: { equals: params.name as string } },
           status: { equals: "published" },
         },
       });

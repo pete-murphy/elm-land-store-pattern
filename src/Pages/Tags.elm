@@ -1,6 +1,7 @@
 module Pages.Tags exposing (Model, Msg, page)
 
 import Api.Tag exposing (Tag)
+import Api.TagId as TagId
 import Auth
 import Auth.Credentials exposing (Credentials)
 import Effect exposing (Effect)
@@ -95,11 +96,7 @@ view model =
     { title = "Tags"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
-            [ Html.header [ Attributes.class "flex justify-between items-center" ]
-                [ Html.h1 [ Attributes.class "text-3xl font-bold" ]
-                    [ Html.text "Browse by Tags" ]
-                ]
-            , Html.p [ Attributes.class "text-gray-600" ]
+            [ Html.p [ Attributes.class "text-gray-600" ]
                 [ Html.text "Discover posts by topic. Click on any tag to see related posts." ]
             , viewTagsSection model.tags
             ]
@@ -128,25 +125,34 @@ viewTagsSection tagsData =
 
             else
                 Html.div [ Attributes.class "grid gap-4" ]
-                    [ Html.div [ Attributes.class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" ]
+                    [ Html.ul [ Attributes.class "grid gap-4 grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]" ]
                         (List.map viewTag tags)
                     ]
 
 
 viewTag : Tag -> Html Msg
 viewTag tag =
-    Html.a
-        [ Route.Path.href (Route.Path.Tags_Slug_ { slug = tag.slug })
-        , Attributes.class "block p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+    let
+        tagId =
+            TagId.toString tag.id
+    in
+    Html.li
+        [ Attributes.class "relative block p-6  rounded-xl transition-color text-[color-mix(in_oklch,var(--color)_25%,oklch(0%_0_0/80%))] bg-[color-mix(in_oklch,var(--color)_10%,oklch(100%_0_0))] hover:bg-[color-mix(in_oklch,var(--color)_15%,oklch(100%_0_0))] active:bg-[color-mix(in_oklch,var(--color)_20%,oklch(100%_0_0))]"
+        , Attributes.attribute "style" ("--color:" ++ tag.color)
         ]
-        [ Html.div [ Attributes.class "flex items-center gap-3 mb-3" ]
+        [ Html.div [ Attributes.class "grid grid-cols-[auto_1fr] items-center gap-3 mb-3" ]
             [ Html.div
                 [ Attributes.class "w-4 h-4 rounded-full"
                 , Attributes.style "background-color" tag.color
                 ]
                 []
             , Html.h3 [ Attributes.class "text-lg font-semibold" ]
-                [ Html.text tag.name ]
+                [ Html.a
+                    [ Attributes.class "before:absolute before:inset-0 before:rounded-xl"
+                    , Route.Path.href (Route.Path.Tags_TagId_ { tagId = tagId })
+                    ]
+                    [ Html.text tagId ]
+                ]
             ]
         , case tag.description of
             Just description ->
@@ -161,14 +167,14 @@ viewTag tag =
 
 viewSkeletonContent : Html msg
 viewSkeletonContent =
-    Html.div [ Attributes.class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" ]
+    Html.div [ Attributes.class "grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-4" ]
         (List.repeat 6
             (Html.div [ Attributes.class "p-6 bg-gray-100 rounded-lg animate-pulse" ]
                 [ Html.div [ Attributes.class "flex items-center gap-3 mb-3" ]
                     [ Html.div [ Attributes.class "w-4 h-4 bg-gray-300 rounded-full" ] []
                     , Html.div [ Attributes.class "h-6 bg-gray-300 rounded w-20" ] []
                     ]
-                , Html.div [ Attributes.class "h-4 bg-gray-300 rounded w-full" ] []
+                , Html.div [ Attributes.class "h-10 bg-gray-300 rounded w-full" ] []
                 ]
             )
         )

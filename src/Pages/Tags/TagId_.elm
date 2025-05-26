@@ -1,9 +1,8 @@
-module Pages.Tags.Slug_ exposing (Model, Msg, page)
+module Pages.Tags.TagId_ exposing (Model, Msg, page)
 
 import Api.Post exposing (Post)
-import Api.Tag exposing (Tag)
+import Api.TagId as TagId
 import Auth
-import Auth.Credentials exposing (Credentials)
 import CustomElements
 import Effect exposing (Effect)
 import Html exposing (Html)
@@ -19,12 +18,12 @@ import Shared
 import View exposing (View)
 
 
-page : Auth.User -> Shared.Model -> Route { slug : String } -> Page Model Msg
-page user shared route =
+page : Auth.User -> Shared.Model -> Route { tagId : String } -> Page Model Msg
+page user _ route =
     Page.new
-        { init = init user shared route.params.slug
-        , update = update
-        , view = view
+        { init = init user route
+        , update = update user route
+        , view = view route
         , subscriptions = subscriptions
         }
         |> Page.withLayout (toLayout user)
@@ -44,19 +43,18 @@ type alias Data a =
 
 
 type alias Model =
-    { tagSlug : String
-    , posts : Data (Paginated (Post Api.Post.Preview))
-    , credentials : Credentials
+    { posts : Data (Paginated (Post Api.Post.Preview))
     }
 
 
-init : Auth.User -> Shared.Model -> String -> () -> ( Model, Effect Msg )
-init user _ tagSlug _ =
-    ( { tagSlug = tagSlug
-      , posts = Loadable.loading
-      , credentials = user.credentials
-      }
-    , Effect.request (Api.Post.listByTag user.credentials tagSlug { page = 1, limit = 10 })
+init : Auth.User -> Route { tagId : String } -> () -> ( Model, Effect Msg )
+init user route _ =
+    let
+        tagId =
+            TagId.fromRoute route
+    in
+    ( { posts = Loadable.loading }
+    , Effect.request (Api.Post.listByTag user.credentials tagId { page = 1, limit = 10 })
         BackendRespondedToGetPosts
     )
 
@@ -74,8 +72,8 @@ type Msg
     | UserScrolledToBottom
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Auth.User -> Route { tagId : String } -> Msg -> Model -> ( Model, Effect Msg )
+update user route msg model =
     case msg of
         BackendRespondedToGetPosts result ->
             ( { model
@@ -99,8 +97,8 @@ update msg model =
                     if paginatedPosts.pagination.hasNextPage then
                         ( { model | posts = Loadable.toLoading model.posts }
                         , Effect.request
-                            (Api.Post.listByTag model.credentials
-                                model.tagSlug
+                            (Api.Post.listByTag user.credentials
+                                (TagId.fromRoute route)
                                 { page = paginatedPosts.pagination.page + 1
                                 , limit = paginatedPosts.pagination.limit
                                 }
@@ -128,23 +126,21 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
-    { title = "Posts tagged with \"" ++ model.tagSlug ++ "\""
+view : Route { tagId : String } -> Model -> View Msg
+view route model =
+    { title = "Posts tagged with \"" ++ route.params.tagId ++ "\""
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
             [ Html.header [ Attributes.class "flex flex-col gap-4" ]
                 [ Html.nav [ Attributes.class "text-sm" ]
                     [ Html.a
                         [ Route.Path.href Route.Path.Tags
-                        , Attributes.class "text-blue-600 hover:underline"
+                        , Attributes.class "text-gray-600 underline"
                         ]
                         [ Html.text "← Back to all tags" ]
                     ]
                 , Html.div []
-                    [ Html.h1 [ Attributes.class "text-3xl font-bold" ]
-                        [ Html.text ("Posts tagged with \"" ++ model.tagSlug ++ "\"") ]
-                    , Html.p [ Attributes.class "text-gray-600 mt-2" ]
+                    [ Html.p [ Attributes.class "text-gray-600 mt-2" ]
                         [ Html.text "Browse all posts in this category." ]
                     ]
                 ]

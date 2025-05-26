@@ -1,7 +1,7 @@
 module Api.UserId exposing
     ( UserId
     , decoder
-    , encoder
+    , encode
     , fromRoute
     , toString
     )
@@ -21,8 +21,8 @@ decoder =
         |> Decode.map UserId
 
 
-encoder : UserId -> Encode.Value
-encoder (UserId userId) =
+encode : UserId -> Encode.Value
+encode (UserId userId) =
     Encode.string userId
 
 
