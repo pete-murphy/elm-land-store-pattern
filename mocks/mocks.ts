@@ -8,8 +8,9 @@ import { SignJWT, jwtVerify } from "jose";
 // Using a full base URL here for clarity with MSW handlers.
 const TEST_API_BASE = "http://localhost/api";
 
-// Seed faker for consistent results during development
-faker.seed(123);
+// seed based on current date + hour
+const today = new Date();
+faker.seed(today.getDate() + today.getMonth() + today.getHours());
 
 // JWT configuration
 const JWT_SECRET = new TextEncoder().encode(
@@ -243,7 +244,7 @@ const seedData = () => {
   const tags = Array.from({ length: 10 }, () => db.tag.create());
 
   // Create posts
-  const posts = Array.from({ length: 50 }, () => {
+  const posts = Array.from({ length: 100 }, () => {
     const randomTags = faker.helpers.arrayElements(tags, { min: 1, max: 3 });
     return db.post.create({
       author: faker.helpers.arrayElement(users),
@@ -252,7 +253,7 @@ const seedData = () => {
   });
 
   // Create comments
-  Array.from({ length: 150 }, () => {
+  Array.from({ length: 250 }, () => {
     const isReply = faker.datatype.boolean(0.3); // 30% chance of being a reply
     const existingComments = db.comment.getAll();
 
@@ -267,7 +268,7 @@ const seedData = () => {
   });
 
   // Create likes - separate for posts and comments to avoid type issues
-  Array.from({ length: 100 }, () => {
+  Array.from({ length: 200 }, () => {
     const target = faker.helpers.arrayElement(posts);
     return db.like.create({
       user: faker.helpers.arrayElement(users),
