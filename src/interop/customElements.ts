@@ -33,7 +33,11 @@ export function init() {
           }
           const labelledBy: Array<string> = [];
           for (const heading of headings) {
-            const id = heading.id ?? "h2-" + slugify(heading.textContent!);
+            const id =
+              // probably only need to check empty string?
+              heading.id != "" && heading.id != null
+                ? heading.id
+                : "h2-" + slugify(heading.textContent!);
             heading.id = id;
             labelledBy.push(id);
           }
