@@ -212,7 +212,7 @@ const createPaginatedResponse = (
 // Seed initial data
 const seedData = () => {
   // Create users with known credentials for testing
-  const users = Array.from({ length: 15 }, (_, index) => {
+  const users = Array.from({ length: 25 }, (_, index) => {
     if (index === 0) {
       // Create a well-known admin user for testing
       return db.user.create({
