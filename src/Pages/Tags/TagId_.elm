@@ -26,7 +26,7 @@ page user shared route =
     let
         requests : Requests
         requests =
-            { posts = Api.Post.listByTag user.credentials (TagId.fromRoute route) { page = 1, limit = 10 } }
+            { posts = Api.Post.listByTag user.credentials (TagId.fromRoute route) { limit = 10 } }
     in
     Page.new
         { init = init requests shared

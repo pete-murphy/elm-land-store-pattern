@@ -178,15 +178,14 @@ list credentials params =
 listByTag :
     Credentials
     -> TagId
-    -> { page : Int, limit : Int }
+    -> { limit : Int }
     -> Request (Paginated (Post Preview))
 listByTag credentials tagId params =
     { method = "GET"
     , headers = Credentials.httpHeaders credentials
     , path = [ "api", "tags", TagId.toString tagId, "posts" ]
     , query =
-        [ Url.Builder.int "page" params.page
-        , Url.Builder.int "limit" params.limit
+        [ Url.Builder.int "limit" params.limit
         ]
     , body = Http.emptyBody
     , decoder = Paginated.decoder previewDecoder
