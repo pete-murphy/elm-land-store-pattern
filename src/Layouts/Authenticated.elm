@@ -107,28 +107,27 @@ view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
         [ Html.div [ Attributes.class "grid mx-auto max-w-4xl grid-cols-[min(35%,20rem)_1fr]" ]
-            [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-8 h-dvh" ]
+            [ Html.aside [ Attributes.class "grid overflow-y-hidden sticky top-0 left-0 p-8 h-dvh grid-rows-[auto_1fr]" ]
                 ([ viewNav currentRoute
-                 , Html.div [ Attributes.class "grid gap-8 self-end" ]
-                    [ viewStore shared.store
-                    , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
-                        [ Button.new
-                            |> Button.withVariantSecondary
-                            |> Button.withText "Renew"
-                            |> Button.withTrailingIcon Path.arrowPath
-                            |> Button.withOnClick UserClickedRenew
-                            |> Button.withSizeSmall
-                            |> Button.withLoading (Loadable.isLoading shared.credentials)
-                            |> Button.toHtml
-                        , Button.new
-                            |> Button.withVariantSecondary
-                            |> Button.withText "Log out"
-                            |> Button.withTrailingIcon Path.arrowRightStartOnRectangle
-                            |> Button.withOnClick UserClickedLogOut
-                            |> Button.withSizeSmall
-                            |> Button.withLoading (Loadable.isLoading shared.logout)
-                            |> Button.toHtml
-                        ]
+                 , Html.div [ Attributes.class "grid overflow-y-scroll gap-8" ]
+                    [ viewStore shared.store ]
+                 , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
+                    [ Button.new
+                        |> Button.withVariantSecondary
+                        |> Button.withText "Renew"
+                        |> Button.withTrailingIcon Path.arrowPath
+                        |> Button.withOnClick UserClickedRenew
+                        |> Button.withSizeSmall
+                        |> Button.withLoading (Loadable.isLoading shared.credentials)
+                        |> Button.toHtml
+                    , Button.new
+                        |> Button.withVariantSecondary
+                        |> Button.withText "Log out"
+                        |> Button.withTrailingIcon Path.arrowRightStartOnRectangle
+                        |> Button.withOnClick UserClickedLogOut
+                        |> Button.withSizeSmall
+                        |> Button.withLoading (Loadable.isLoading shared.logout)
+                        |> Button.toHtml
                     ]
                  ]
                     |> List.map (Html.map toContentMsg)
@@ -148,11 +147,11 @@ view props shared currentRoute { toContentMsg, content } =
 
 viewStore : Store -> Html.Html msg
 viewStore store =
-    Html.dl [ Attributes.class "grid gap-2" ]
+    Html.dl [ Attributes.class "flex flex-col gap-2 justify-end" ]
         (Dict.toList store
             |> List.map
                 (\( k, v ) ->
-                    Html.div [ Attributes.class "grid text-xs font-mono" ]
+                    Html.div [ Attributes.class "grid font-mono text-xs" ]
                         [ Html.dt []
                             [ Html.text k
                             ]
@@ -168,34 +167,34 @@ viewStore store =
                                 expandButton id text =
                                     [ Html.button
                                         [ Attributes.attribute "popovertarget" id
-                                        , Attributes.class "inline-grid overflow-clip max-w-full border text-start text-ellipsis anchor/my-anchor"
+                                        , Attributes.class "inline-grid p-0.5 max-w-full rounded-sm overflow-clip text-start text-ellipsis [anchor-name:--my-anchor] hover:bg-[oklch(from_currentColor_l_c_h_/_0.05)]"
                                         ]
                                         [ Html.span [ Attributes.class "line-clamp-1" ] [ Html.text text ] ]
                                     , Html.div
                                         [ Attributes.id id
                                         , Attributes.attribute "popover" "auto"
-                                        , Attributes.class "whitespace-pre-wrap max-h-[50dvh] max-w-[80dvw] fixed m-2 anchored-top-center/my-anchor"
+                                        , Attributes.class "fixed p-2 m-2 font-semibold whitespace-pre rounded-lg text-nowrap overflow-ellipsis backdrop-blur-md bg-gray-800/90 text-[oklch(from_currentColor_1_c_h)] max-h-[80dvh] max-w-[60dvw] [position-anchor:--my-anchor] [position-area:right_top]"
                                         ]
                                         [ Html.text text ]
                                     ]
                               in
                               case Loadable.value v of
                                 Loadable.Empty ->
-                                    Html.span [ Attributes.class "text-gray-600 grid grid-flow-col gap-1 items-center" ]
+                                    Html.span [ Attributes.class "grid gap-1 items-center text-gray-600 grid-cols-[auto_1fr]" ]
                                         [ Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.ellipsisHorizontal
                                             |> orLoading
-                                        , Html.span [ Attributes.class "line-clamp-1" ] [ Html.text "Empty" ]
+                                        , Html.span [ Attributes.class "p-0.5 line-clamp-1" ] [ Html.text "Empty" ]
                                         ]
 
                                 Loadable.Failure failure ->
-                                    Html.span [ Attributes.class "text-red-600 grid grid-flow-col gap-1 items-center" ]
+                                    Html.span [ Attributes.class "grid grid-flow-col gap-1 items-center text-red-600" ]
                                         ((Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.xMark |> orLoading)
                                             -- , Html.span [ Attributes.class "line-clamp-1" ] [ Html.text (DetailedError.toString failure) ]
                                             :: expandButton "failure" (DetailedError.toString failure)
                                         )
 
                                 Loadable.Success success ->
-                                    Html.span [ Attributes.class "text-green-600 grid grid-flow-col gap-1 items-center" ]
+                                    Html.span [ Attributes.class "grid grid-flow-col gap-1 items-center text-green-600" ]
                                         ((Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.check |> orLoading)
                                             --  Html.span [ Attributes.class "line-clamp-1" ] [ Html.text (Json.Encode.encode 0 success) ]
                                             :: expandButton "success" (Json.Encode.encode 2 success)

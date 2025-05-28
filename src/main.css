@@ -13,9 +13,6 @@
     }
     scrollbar-gutter: stable;
   }
-}
-
-@layer reset {
   :where(button, input, a:link, select, textarea) {
     transition: outline-color 0.1s ease-in-out, outline-offset 0.1s ease-in-out;
     outline-color: transparent;
