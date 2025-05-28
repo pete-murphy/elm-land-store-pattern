@@ -231,6 +231,11 @@ updateOk route msg model =
             , Effect.none
             )
 
+        Shared.Msg.UserClickedClearStore ->
+            ( { model | store = Dict.empty }
+            , Effect.none
+            )
+
 
 
 -- SUBSCRIPTIONS

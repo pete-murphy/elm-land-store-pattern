@@ -30,6 +30,7 @@ type Msg
     | StoreResponsePaginated Store.Msg (ApiResult Encode.Value)
     | UserSetPaginatedStrategy PaginatedStrategy
     | UserSetStrategy Strategy
+    | UserClickedClearStore
       -- NOOP
     | NoOp
 

@@ -71,7 +71,7 @@ init _ =
 
 
 type Msg
-    = UserClickedRenew
+    = UserClickedClearStore
     | UserClickedLogOut
     | UserClickedSetStrategy Store.Strategy
     | UserClickedSetPaginatedStrategy Store.PaginatedStrategy
@@ -80,9 +80,9 @@ type Msg
 update : Props -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
 update _ _ msg model =
     case msg of
-        UserClickedRenew ->
+        UserClickedClearStore ->
             ( model
-            , Effect.renewToken
+            , Effect.clearStore
             )
 
         UserClickedLogOut ->
@@ -128,9 +128,9 @@ view props shared currentRoute { toContentMsg, content } =
                 , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
                     [ Button.new
                         |> Button.withVariantSecondary
-                        |> Button.withText "Renew token"
-                        |> Button.withTrailingIcon Path.arrowPath
-                        |> Button.withOnClick (toContentMsg UserClickedRenew)
+                        |> Button.withText "Clear store"
+                        |> Button.withTrailingIcon Path.trash
+                        |> Button.withOnClick (toContentMsg UserClickedClearStore)
                         |> Button.withSizeSmall
                         |> Button.withLoading (Loadable.isLoading shared.credentials)
                         |> Button.toHtml

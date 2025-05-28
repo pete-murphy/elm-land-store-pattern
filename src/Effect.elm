@@ -9,6 +9,7 @@ port module Effect exposing
     , login, renewToken, logOut
     , sendStoreRequest, sendStoreRequestPaginated
     , request, requestNoContent
+    , clearStore
     , focusById
     , map, toCmd
     , setStrategy, setPaginatedStrategy
@@ -30,6 +31,7 @@ port module Effect exposing
 
 @docs sendStoreRequest, sendStoreRequestPaginated
 @docs request, requestNoContent
+@docs clearStore
 
 @docs focusById
 
@@ -222,6 +224,11 @@ setStrategy strategy =
 setPaginatedStrategy : Store.PaginatedStrategy -> Effect msg
 setPaginatedStrategy strategy =
     SendSharedMsg (Shared.Msg.UserSetPaginatedStrategy strategy)
+
+
+clearStore : Effect msg
+clearStore =
+    SendSharedMsg Shared.Msg.UserClickedClearStore
 
 
 request :
