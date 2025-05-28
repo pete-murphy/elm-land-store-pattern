@@ -122,7 +122,7 @@ view props shared currentRoute { toContentMsg, content } =
         [ Html.div [ Attributes.class "grid mx-auto max-w-4xl grid-cols-[min(35%,20rem)_1fr]" ]
             [ Html.aside [ Attributes.class "grid overflow-y-hidden sticky top-0 left-0 p-8 h-dvh grid-rows-[auto_1fr_auto_auto]" ]
                 [ viewNav currentRoute
-                , Html.div [ Attributes.class "grid grid-rows-[1fr_auto] overflow-y-scroll gap-8" ]
+                , Html.div [ Attributes.class "grid overflow-y-scroll gap-8 grid-rows-[1fr_auto]" ]
                     [ viewStore shared.store ]
                 , viewStrategyControls shared toContentMsg
                 , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
@@ -167,7 +167,7 @@ viewStore store =
                         [ Html.dt []
                             [ Html.text k
                             ]
-                        , Html.dd [ Attributes.class "relative grid grid-flow-col gap-2 items-center" ]
+                        , Html.dd [ Attributes.class "grid relative grid-flow-col gap-2 items-center" ]
                             [ let
                                 orLoading x =
                                     if Loadable.isLoading v then
@@ -186,7 +186,7 @@ viewStore store =
                                     , Html.div
                                         [ Attributes.id id
                                         , Attributes.attribute "popover" "auto"
-                                        , Attributes.class "absolute p-2 m-0 font-semibold whitespace-pre rounded-lg text-nowrap overflow-ellipsis backdrop-blur-md bg-gray-800/90 text-[oklch(from_currentColor_1_c_h)] max-h-[50dvh] max-w-[60dvw] [position-area:right_center] [position-try-fallbacks:flip-start]"
+                                        , Attributes.class "absolute p-2 m-0 font-semibold whitespace-pre rounded-lg opacity-0 transition duration-100 -translate-x-4 text-nowrap overflow-x-clip text-ellipsis backdrop-blur-md bg-gray-800/90 text-[oklch(from_currentColor_1_c_h)] transition-discrete open:opacity-100 open:translate-x-0 open:scale-100 open:starting:-translate-x-4 open:starting:scale-98 scale-98 max-h-[50dvh] max-w-[min(60dvw,120ch)] [position-area:right_center] [position-try-fallbacks:flip-start]"
                                         , Attributes.style "position-anchor" ("--anchor_" ++ id)
                                         ]
                                         [ Html.text text ]
@@ -252,7 +252,7 @@ viewNav currentRoute =
 
 viewStrategyControls : Shared.Model.OkModel -> (Msg -> contentMsg) -> Html.Html contentMsg
 viewStrategyControls shared toContentMsg =
-    Html.div [ Attributes.class "flex flex-col gap-1 h-fit text-xs" ]
+    Html.div [ Attributes.class "flex flex-col gap-1 text-xs h-fit" ]
         [ Html.div [ Attributes.class "grid gap-1" ]
             [ Html.h3 [ Attributes.class "font-semibold text-gray-700" ] [ Html.text "Strategy" ]
             , Html.div [ Attributes.class "grid" ]
@@ -294,7 +294,7 @@ viewStrategyControls shared toContentMsg =
 radioButton : String -> String -> Bool -> contentMsg -> Html.Html contentMsg
 radioButton name label isChecked onClickMsg =
     Html.label
-        [ Attributes.class "flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded" ]
+        [ Attributes.class "flex gap-2 items-center p-1 rounded cursor-pointer hover:bg-gray-50" ]
         [ Html.input
             [ Attributes.type_ "radio"
             , Attributes.name name
