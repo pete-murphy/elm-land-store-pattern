@@ -11,6 +11,7 @@ port module Effect exposing
     , request, requestNoContent
     , focusById
     , map, toCmd
+    , setStrategy, setPaginatedStrategy
     )
 
 {-|
@@ -33,6 +34,8 @@ port module Effect exposing
 @docs focusById
 
 @docs map, toCmd
+
+@docs setStrategy, setPaginatedStrategy
 
 -}
 
@@ -209,6 +212,16 @@ logOut =
 renewToken : Effect msg
 renewToken =
     SendSharedMsg Shared.Msg.UserClickedRenewToken
+
+
+setStrategy : Store.Strategy -> Effect msg
+setStrategy strategy =
+    SendSharedMsg (Shared.Msg.UserSetStrategy strategy)
+
+
+setPaginatedStrategy : Store.PaginatedStrategy -> Effect msg
+setPaginatedStrategy strategy =
+    SendSharedMsg (Shared.Msg.UserSetPaginatedStrategy strategy)
 
 
 request :

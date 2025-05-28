@@ -24,7 +24,7 @@ import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
 import Shared.Model
-import Store exposing (PaginatedStrategy(..), Store)
+import Store exposing (Store)
 import View exposing (View)
 
 
@@ -36,8 +36,8 @@ page user shared _ =
             }
     in
     Page.new
-        { init = init requests
-        , update = update requests user
+        { init = init requests shared
+        , update = update requests user shared
         , view = view requests (Shared.Model.store shared)
         , subscriptions = subscriptions
         }
@@ -72,12 +72,12 @@ type alias Model =
     }
 
 
-init : Requests -> () -> ( Model, Effect Msg )
-init requests _ =
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared _ =
     ( { modal = Nothing
       , newPost = Loadable.notAsked
       }
-    , Effect.sendStoreRequestPaginated NextPage requests.posts
+    , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.posts
     )
 
 
@@ -99,8 +99,8 @@ type Msg
     | NoOp
 
 
-update : Requests -> Auth.User -> Msg -> Model -> ( Model, Effect Msg )
-update requests user msg model =
+update : Requests -> Auth.User -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update requests user shared msg model =
     case msg of
         BackendRespondedToCreatePost result ->
             case result of
@@ -109,7 +109,7 @@ update requests user msg model =
                         | modal = Nothing
                         , newPost = Loadable.succeed ()
                       }
-                    , Effect.sendStoreRequestPaginated Reset requests.posts
+                    , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.posts
                     )
 
                 Err error ->
@@ -119,7 +119,7 @@ update requests user msg model =
 
         UserScrolledToBottom ->
             ( model
-            , Effect.sendStoreRequestPaginated NextPage requests.posts
+            , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.posts
             )
 
         UserClickedCreatePost ->

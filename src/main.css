@@ -23,6 +23,17 @@
       outline-color: var(--color-gray-800);
     }
   }
+  @position-try --custom-right-center {
+    left: calc(anchor(right) + 10px);
+    top: calc(anchor(center) - 10px);
+    align-self: anchor-center;
+    position-area: none;
+  }
+  @position-try --custom-right-top {
+    left: calc(anchor(right) + 10px);
+    align-self: anchor-center;
+    position-area: none;
+  }
 }
 
 @theme {

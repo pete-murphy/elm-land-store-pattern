@@ -15,7 +15,7 @@ import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Shared
 import Shared.Model
-import Store exposing (PaginatedStrategy(..), Store)
+import Store exposing (Store)
 import View exposing (View)
 
 
@@ -27,8 +27,8 @@ page user shared _ =
             }
     in
     Page.new
-        { init = init requests
-        , update = update requests
+        { init = init requests shared
+        , update = update requests shared
         , view = view requests (Shared.Model.store shared)
         , subscriptions = subscriptions
         }
@@ -53,10 +53,10 @@ type alias Model =
     {}
 
 
-init : Requests -> () -> ( Model, Effect Msg )
-init requests _ =
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared _ =
     ( {}
-    , Effect.sendStoreRequestPaginated NextPage requests.users
+    , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.users
     )
 
 
@@ -69,12 +69,12 @@ type Msg
     | NoOp
 
 
-update : Requests -> Msg -> Model -> ( Model, Effect Msg )
-update requests msg model =
+update : Requests -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update requests shared msg model =
     case msg of
         UserScrolledToBottom ->
             ( model
-            , Effect.sendStoreRequestPaginated NextPage requests.users
+            , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.users
             )
 
         NoOp ->

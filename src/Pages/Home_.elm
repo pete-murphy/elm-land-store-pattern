@@ -30,7 +30,7 @@ page user shared _ =
             }
     in
     Page.new
-        { init = init requests
+        { init = init requests shared
         , update = update
         , view = view requests (Shared.Model.store shared)
         , subscriptions = subscriptions
@@ -62,13 +62,13 @@ type alias Model =
     {}
 
 
-init : Requests -> () -> ( Model, Effect Msg )
-init requests _ =
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared _ =
     ( {}
     , Effect.batch
-        [ Effect.sendStoreRequest StaleWhileRevalidate requests.tags
-        , Effect.sendStoreRequest StaleWhileRevalidate requests.users
-        , Effect.sendStoreRequest StaleWhileRevalidate requests.posts
+        [ Effect.sendStoreRequest (Shared.Model.strategy shared) requests.tags
+        , Effect.sendStoreRequest (Shared.Model.strategy shared) requests.users
+        , Effect.sendStoreRequest (Shared.Model.strategy shared) requests.posts
         ]
     )
 

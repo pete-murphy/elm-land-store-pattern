@@ -33,7 +33,7 @@ page user shared route =
             }
     in
     Page.new
-        { init = init requests
+        { init = init requests shared
         , update = update
         , subscriptions = subscriptions
         , view = view requests (Shared.Model.store shared)
@@ -64,12 +64,12 @@ type alias Model =
     {}
 
 
-init : Requests -> () -> ( Model, Effect Msg )
-init requests () =
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared _ =
     ( {}
     , Effect.batch
-        [ Effect.sendStoreRequest CacheFirst requests.user
-        , Effect.sendStoreRequestPaginated NextPage requests.posts
+        [ Effect.sendStoreRequest (Shared.Model.strategy shared) requests.user
+        , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.posts
         ]
     )
 

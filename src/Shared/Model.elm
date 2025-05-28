@@ -1,4 +1,4 @@
-module Shared.Model exposing (Model, OkModel, store)
+module Shared.Model exposing (Model, OkModel, paginatedStrategy, store, strategy)
 
 {-| -}
 
@@ -25,6 +25,8 @@ type alias OkModel =
     { credentials : Data Credentials
     , logout : Data ()
     , store : Store
+    , paginatedStrategy : Store.PaginatedStrategy
+    , strategy : Store.Strategy
     }
 
 
@@ -46,3 +48,27 @@ store model =
 
         Err _ ->
             Dict.empty
+
+
+paginatedStrategy :
+    Model
+    -> Store.PaginatedStrategy
+paginatedStrategy model =
+    case model of
+        Ok okModel ->
+            okModel.paginatedStrategy
+
+        Err _ ->
+            Store.NextPage
+
+
+strategy :
+    Model
+    -> Store.Strategy
+strategy model =
+    case model of
+        Ok okModel ->
+            okModel.strategy
+
+        Err _ ->
+            Store.CacheFirst

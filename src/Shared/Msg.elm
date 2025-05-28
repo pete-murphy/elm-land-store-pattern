@@ -28,6 +28,8 @@ type Msg
     | StoreRequestPaginated PaginatedStrategy Store.Msg
     | StoreResponse Store.Msg (ApiResult Encode.Value)
     | StoreResponsePaginated Store.Msg (ApiResult Encode.Value)
+    | UserSetPaginatedStrategy PaginatedStrategy
+    | UserSetStrategy Strategy
       -- NOOP
     | NoOp
 

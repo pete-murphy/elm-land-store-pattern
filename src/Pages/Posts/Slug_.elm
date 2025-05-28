@@ -36,8 +36,8 @@ page user shared route =
             }
     in
     Page.new
-        { init = init requests
-        , update = update requests
+        { init = init requests shared
+        , update = update requests shared
         , subscriptions = subscriptions
         , view = view requests (Shared.Model.store shared)
         }
@@ -63,10 +63,10 @@ type alias Model =
     {}
 
 
-init : Requests -> () -> ( Model, Effect Msg )
-init requests () =
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared () =
     ( {}
-    , Effect.sendStoreRequest StaleWhileRevalidate requests.post
+    , Effect.sendStoreRequest (Shared.Model.strategy shared) requests.post
     )
 
 
@@ -79,12 +79,12 @@ type Msg
     | NoOp
 
 
-update : Requests -> Msg -> Model -> ( Model, Effect Msg )
-update requests msg model =
+update : Requests -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update requests shared msg model =
     case msg of
         UserScrolledToBottom post ->
             ( model
-            , Effect.sendStoreRequest StaleWhileRevalidate (requests.comments post)
+            , Effect.sendStoreRequest (Shared.Model.strategy shared) (requests.comments post)
             )
 
         NoOp ->

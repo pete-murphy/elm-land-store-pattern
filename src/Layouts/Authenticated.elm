@@ -13,6 +13,7 @@ import Dict
 import Effect exposing (Effect)
 import Html
 import Html.Attributes as Attributes
+import Html.Events
 import Http.DetailedError as DetailedError
 import Json.Decode as Decode
 import Json.Encode
@@ -72,6 +73,8 @@ init _ =
 type Msg
     = UserClickedRenew
     | UserClickedLogOut
+    | UserClickedSetStrategy Store.Strategy
+    | UserClickedSetPaginatedStrategy Store.PaginatedStrategy
 
 
 update : Props -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -85,6 +88,16 @@ update _ _ msg model =
         UserClickedLogOut ->
             ( model
             , Effect.logOut
+            )
+
+        UserClickedSetStrategy strategy ->
+            ( model
+            , Effect.setStrategy strategy
+            )
+
+        UserClickedSetPaginatedStrategy strategy ->
+            ( model
+            , Effect.setPaginatedStrategy strategy
             )
 
 
@@ -107,16 +120,17 @@ view props shared currentRoute { toContentMsg, content } =
     { title = content.title
     , body =
         [ Html.div [ Attributes.class "grid mx-auto max-w-4xl grid-cols-[min(35%,20rem)_1fr]" ]
-            [ Html.aside [ Attributes.class "grid overflow-y-hidden sticky top-0 left-0 p-8 h-dvh grid-rows-[auto_1fr]" ]
-                ([ viewNav currentRoute
-                 , Html.div [ Attributes.class "grid overflow-y-scroll gap-8" ]
+            [ Html.aside [ Attributes.class "grid overflow-y-hidden sticky top-0 left-0 p-8 h-dvh grid-rows-[auto_1fr_auto_auto]" ]
+                [ viewNav currentRoute
+                , Html.div [ Attributes.class "grid grid-rows-[1fr_auto] overflow-y-scroll gap-8" ]
                     [ viewStore shared.store ]
-                 , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
+                , viewStrategyControls shared toContentMsg
+                , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
                     [ Button.new
                         |> Button.withVariantSecondary
-                        |> Button.withText "Renew"
+                        |> Button.withText "Renew token"
                         |> Button.withTrailingIcon Path.arrowPath
-                        |> Button.withOnClick UserClickedRenew
+                        |> Button.withOnClick (toContentMsg UserClickedRenew)
                         |> Button.withSizeSmall
                         |> Button.withLoading (Loadable.isLoading shared.credentials)
                         |> Button.toHtml
@@ -124,14 +138,12 @@ view props shared currentRoute { toContentMsg, content } =
                         |> Button.withVariantSecondary
                         |> Button.withText "Log out"
                         |> Button.withTrailingIcon Path.arrowRightStartOnRectangle
-                        |> Button.withOnClick UserClickedLogOut
+                        |> Button.withOnClick (toContentMsg UserClickedLogOut)
                         |> Button.withSizeSmall
                         |> Button.withLoading (Loadable.isLoading shared.logout)
                         |> Button.toHtml
                     ]
-                 ]
-                    |> List.map (Html.map toContentMsg)
-                )
+                ]
             , Html.div [ Attributes.class "flex flex-col gap-8 p-8" ]
                 [ Html.header []
                     [ Html.h1
@@ -155,7 +167,7 @@ viewStore store =
                         [ Html.dt []
                             [ Html.text k
                             ]
-                        , Html.dd [ Attributes.class "grid grid-flow-col gap-2 items-center" ]
+                        , Html.dd [ Attributes.class "relative grid grid-flow-col gap-2 items-center" ]
                             [ let
                                 orLoading x =
                                     if Loadable.isLoading v then
@@ -167,13 +179,15 @@ viewStore store =
                                 expandButton id text =
                                     [ Html.button
                                         [ Attributes.attribute "popovertarget" id
-                                        , Attributes.class "inline-grid p-0.5 max-w-full rounded-sm overflow-clip text-start text-ellipsis [anchor-name:--my-anchor] hover:bg-[oklch(from_currentColor_l_c_h_/_0.05)]"
+                                        , Attributes.class "inline-grid p-0.5 max-w-full rounded-sm overflow-clip text-start text-ellipsis hover:bg-[oklch(from_currentColor_l_c_h_/_0.05)]"
+                                        , Attributes.style "anchor-name" ("--anchor_" ++ id)
                                         ]
                                         [ Html.span [ Attributes.class "line-clamp-1" ] [ Html.text text ] ]
                                     , Html.div
                                         [ Attributes.id id
                                         , Attributes.attribute "popover" "auto"
-                                        , Attributes.class "fixed p-2 m-2 font-semibold whitespace-pre rounded-lg text-nowrap overflow-ellipsis backdrop-blur-md bg-gray-800/90 text-[oklch(from_currentColor_1_c_h)] max-h-[80dvh] max-w-[60dvw] [position-anchor:--my-anchor] [position-area:right_top]"
+                                        , Attributes.class "absolute p-2 m-0 font-semibold whitespace-pre rounded-lg text-nowrap overflow-ellipsis backdrop-blur-md bg-gray-800/90 text-[oklch(from_currentColor_1_c_h)] max-h-[50dvh] max-w-[60dvw] [position-area:right_center] [position-try-fallbacks:flip-start]"
+                                        , Attributes.style "position-anchor" ("--anchor_" ++ id)
                                         ]
                                         [ Html.text text ]
                                     ]
@@ -233,4 +247,61 @@ viewNav currentRoute =
                             ]
                     )
             )
+        ]
+
+
+viewStrategyControls : Shared.Model.OkModel -> (Msg -> contentMsg) -> Html.Html contentMsg
+viewStrategyControls shared toContentMsg =
+    Html.div [ Attributes.class "flex flex-col gap-1 h-fit text-xs" ]
+        [ Html.div [ Attributes.class "grid gap-1" ]
+            [ Html.h3 [ Attributes.class "font-semibold text-gray-700" ] [ Html.text "Strategy" ]
+            , Html.div [ Attributes.class "grid" ]
+                [ radioButton
+                    "strategy-cache-first"
+                    "CacheFirst"
+                    (shared.strategy == Store.CacheFirst)
+                    (toContentMsg (UserClickedSetStrategy Store.CacheFirst))
+                , radioButton
+                    "strategy-network-only"
+                    "NetworkOnly"
+                    (shared.strategy == Store.NetworkOnly)
+                    (toContentMsg (UserClickedSetStrategy Store.NetworkOnly))
+                , radioButton
+                    "strategy-stale-while-revalidate"
+                    "StaleWhileRevalidate"
+                    (shared.strategy == Store.StaleWhileRevalidate)
+                    (toContentMsg (UserClickedSetStrategy Store.StaleWhileRevalidate))
+                ]
+            ]
+        , Html.div [ Attributes.class "grid gap-1" ]
+            [ Html.h3 [ Attributes.class "font-semibold text-gray-700" ] [ Html.text "Paginated Strategy" ]
+            , Html.div [ Attributes.class "grid" ]
+                [ radioButton
+                    "paginated-strategy-next-page"
+                    "NextPage"
+                    (shared.paginatedStrategy == Store.NextPage)
+                    (toContentMsg (UserClickedSetPaginatedStrategy Store.NextPage))
+                , radioButton
+                    "paginated-strategy-reset"
+                    "Reset"
+                    (shared.paginatedStrategy == Store.Reset)
+                    (toContentMsg (UserClickedSetPaginatedStrategy Store.Reset))
+                ]
+            ]
+        ]
+
+
+radioButton : String -> String -> Bool -> contentMsg -> Html.Html contentMsg
+radioButton name label isChecked onClickMsg =
+    Html.label
+        [ Attributes.class "flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded" ]
+        [ Html.input
+            [ Attributes.type_ "radio"
+            , Attributes.name name
+            , Attributes.checked isChecked
+            , Html.Events.onClick onClickMsg
+            , Attributes.class "text-blue-600"
+            ]
+            []
+        , Html.span [ Attributes.class "text-gray-600" ] [ Html.text label ]
         ]

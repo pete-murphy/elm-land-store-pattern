@@ -60,6 +60,8 @@ init flagsResult _ =
                 { credentials = Loadable.fromMaybe flags.credentials
                 , logout = Loadable.notAsked
                 , store = Dict.empty
+                , paginatedStrategy = Store.NextPage
+                , strategy = Store.CacheFirst
                 }
             , Effect.none
             )
@@ -216,6 +218,16 @@ updateOk route msg model =
                     Store.handleResponsePaginated storeMsg result model.store
             in
             ( { model | store = newStore }
+            , Effect.none
+            )
+
+        Shared.Msg.UserSetPaginatedStrategy paginatedStrategy ->
+            ( { model | paginatedStrategy = paginatedStrategy }
+            , Effect.none
+            )
+
+        Shared.Msg.UserSetStrategy strategy ->
+            ( { model | strategy = strategy }
             , Effect.none
             )
 
