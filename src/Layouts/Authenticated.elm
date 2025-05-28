@@ -9,10 +9,13 @@ import Components.Button as Button
 import Components.Icon as Icon
 import Components.Icon.Path as Path
 import Components.LocaleTime as LocaleTime
+import Dict
 import Effect exposing (Effect)
 import Html
 import Html.Attributes as Attributes
+import Http.DetailedError as DetailedError
 import Json.Decode as Decode
+import Json.Encode
 import Jwt
 import Layout exposing (Layout)
 import Loadable
@@ -21,6 +24,7 @@ import Route exposing (Route)
 import Route.Path
 import Shared
 import Shared.Model
+import Store exposing (Store)
 import Svg.Attributes
 import Time
 import View exposing (View)
@@ -106,7 +110,7 @@ view props shared currentRoute { toContentMsg, content } =
             [ Html.aside [ Attributes.class "grid sticky top-0 left-0 p-8 h-dvh" ]
                 ([ viewNav currentRoute
                  , Html.div [ Attributes.class "grid gap-8 self-end" ]
-                    [ viewUserInfo props.user.credentials
+                    [ viewStore shared.store
                     , Html.div [ Attributes.class "flex flex-wrap gap-2" ]
                         [ Button.new
                             |> Button.withVariantSecondary
@@ -142,53 +146,64 @@ view props shared currentRoute { toContentMsg, content } =
     }
 
 
-viewUserInfo : Credentials -> Html.Html Msg
-viewUserInfo credentials =
-    let
-        accessToken =
-            Credentials.accessToken credentials
+viewStore : Store -> Html.Html msg
+viewStore store =
+    Html.dl [ Attributes.class "grid gap-2" ]
+        (Dict.toList store
+            |> List.map
+                (\( k, v ) ->
+                    Html.div [ Attributes.class "grid text-xs font-mono" ]
+                        [ Html.dt []
+                            [ Html.text k
+                            ]
+                        , Html.dd [ Attributes.class "grid grid-flow-col gap-2 items-center" ]
+                            [ let
+                                orLoading x =
+                                    if Loadable.isLoading v then
+                                        Icon.view Icon.Micro [ Svg.Attributes.class "animate-spin" ] Path.arrowPath
 
-        infoFromUser =
-            Ok Tuple.pair
-                |> Result.Extra.andMap (AccessToken.expiresAt accessToken)
-                |> Result.Extra.andMap (AccessToken.decode (Decode.field "iat" Decode.int) accessToken)
-    in
-    case infoFromUser of
-        Ok ( expiresAt, issuedAt ) ->
-            Html.dl [ Attributes.class "grid gap-3 px-2 text-sm" ]
-                (let
-                    user =
-                        Credentials.user credentials
+                                    else
+                                        x
 
-                    displayTime posix =
-                        LocaleTime.new posix
-                            |> LocaleTime.withRelativeAttrs [ Attributes.class "overflow-hidden text-xs text-ellipsis line-clamp-1" ]
-                            |> LocaleTime.withLocaleAttrs [ Attributes.class "overflow-hidden text-xs sm:text-sm text-ellipsis line-clamp-1" ]
-                            |> LocaleTime.toHtml
-                            |> Html.div [ Attributes.class "grid overflow-hidden text-ellipsis line-clamp-1" ]
+                                expandButton id text =
+                                    [ Html.button
+                                        [ Attributes.attribute "popovertarget" id
+                                        , Attributes.class "inline-grid overflow-clip max-w-full border text-start text-ellipsis anchor/my-anchor"
+                                        ]
+                                        [ Html.span [ Attributes.class "line-clamp-1" ] [ Html.text text ] ]
+                                    , Html.div
+                                        [ Attributes.id id
+                                        , Attributes.attribute "popover" "auto"
+                                        , Attributes.class "whitespace-pre-wrap max-h-[50dvh] max-w-[80dvw] fixed m-2 anchored-top-center/my-anchor"
+                                        ]
+                                        [ Html.text text ]
+                                    ]
+                              in
+                              case Loadable.value v of
+                                Loadable.Empty ->
+                                    Html.span [ Attributes.class "text-gray-600 grid grid-flow-col gap-1 items-center" ]
+                                        [ Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.ellipsisHorizontal
+                                            |> orLoading
+                                        , Html.span [ Attributes.class "line-clamp-1" ] [ Html.text "Empty" ]
+                                        ]
 
-                    items =
-                        [ ( "Logged in", Html.text (User.username user ++ " (" ++ User.email user ++ ")") )
-                        , ( "Issued", displayTime (Time.millisToPosix (issuedAt * 1000)) )
-                        , ( "Expires", displayTime (Time.millisToPosix (expiresAt * 1000)) )
+                                Loadable.Failure failure ->
+                                    Html.span [ Attributes.class "text-red-600 grid grid-flow-col gap-1 items-center" ]
+                                        ((Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.xMark |> orLoading)
+                                            -- , Html.span [ Attributes.class "line-clamp-1" ] [ Html.text (DetailedError.toString failure) ]
+                                            :: expandButton "failure" (DetailedError.toString failure)
+                                        )
+
+                                Loadable.Success success ->
+                                    Html.span [ Attributes.class "text-green-600 grid grid-flow-col gap-1 items-center" ]
+                                        ((Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.check |> orLoading)
+                                            --  Html.span [ Attributes.class "line-clamp-1" ] [ Html.text (Json.Encode.encode 0 success) ]
+                                            :: expandButton "success" (Json.Encode.encode 2 success)
+                                        )
+                            ]
                         ]
-                 in
-                 items
-                    |> List.map
-                        (\( label, value ) ->
-                            Html.div [ Attributes.class "grid" ]
-                                [ Html.dd [ Attributes.class "text-sm font-semibold" ]
-                                    [ Html.text label ]
-                                , Html.dt [ Attributes.class "overflow-hidden max-w-prose line-clamp-1 text-ellipsis" ] [ value ]
-                                ]
-                        )
                 )
-
-        Err err ->
-            Html.div []
-                [ Html.text "Error decoding JWT: "
-                , Html.text (Jwt.errorToString err)
-                ]
+        )
 
 
 viewNav : Route () -> Html.Html msg
