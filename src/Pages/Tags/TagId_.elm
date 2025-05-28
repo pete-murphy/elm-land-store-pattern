@@ -8,6 +8,7 @@ import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Http.DetailedError as DetailedError exposing (DetailedError)
+import Http.Extra exposing (Request)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
@@ -15,15 +16,22 @@ import Paginated exposing (Paginated)
 import Route exposing (Route)
 import Route.Path
 import Shared
+import Shared.Model
+import Store
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route { tagId : String } -> Page Model Msg
-page user _ route =
+page user shared route =
+    let
+        requests : Requests
+        requests =
+            { posts = Api.Post.listByTag user.credentials (TagId.fromRoute route) { page = 1, limit = 10 } }
+    in
     Page.new
-        { init = init user route
-        , update = update user route
-        , view = view route
+        { init = init requests shared
+        , update = update requests shared
+        , view = view requests shared route
         , subscriptions = subscriptions
         }
         |> Page.withLayout (toLayout user)
@@ -38,24 +46,19 @@ toLayout user _ =
 -- INIT
 
 
-type alias Data a =
-    Loadable DetailedError a
-
-
-type alias Model =
-    { posts : Data (Paginated (Post Api.Post.Preview))
+type alias Requests =
+    { posts : Request (Paginated (Post Api.Post.Preview))
     }
 
 
-init : Auth.User -> Route { tagId : String } -> () -> ( Model, Effect Msg )
-init user route _ =
-    let
-        tagId =
-            TagId.fromRoute route
-    in
-    ( { posts = Loadable.loading }
-    , Effect.request (Api.Post.listByTag user.credentials tagId { page = 1, limit = 10 })
-        BackendRespondedToGetPosts
+type alias Model =
+    {}
+
+
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared _ =
+    ( {}
+    , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.posts
     )
 
 
@@ -63,54 +66,17 @@ init user route _ =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetPosts (ApiResult (Paginated (Post Api.Post.Preview)))
-    | UserScrolledToBottom
+    = UserScrolledToBottom
 
 
-update : Auth.User -> Route { tagId : String } -> Msg -> Model -> ( Model, Effect Msg )
-update user route msg model =
+update : Requests -> Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update requests shared msg model =
     case msg of
-        BackendRespondedToGetPosts result ->
-            ( { model
-                | posts =
-                    case Result.map (.pagination >> .page) result of
-                        Ok 1 ->
-                            Loadable.fromResult result
-
-                        _ ->
-                            Loadable.succeed Paginated.merge
-                                |> Loadable.andMap model.posts
-                                |> Loadable.andMap (Loadable.fromResult result)
-                                |> Loadable.toNotLoading
-              }
-            , Effect.none
-            )
-
         UserScrolledToBottom ->
-            case Loadable.value model.posts of
-                Loadable.Success paginatedPosts ->
-                    if paginatedPosts.pagination.hasNextPage then
-                        ( { model | posts = Loadable.toLoading model.posts }
-                        , Effect.request
-                            (Api.Post.listByTag user.credentials
-                                (TagId.fromRoute route)
-                                { page = paginatedPosts.pagination.page + 1
-                                , limit = paginatedPosts.pagination.limit
-                                }
-                            )
-                            BackendRespondedToGetPosts
-                        )
-
-                    else
-                        ( model, Effect.none )
-
-                _ ->
-                    ( model, Effect.none )
+            ( model
+            , Effect.sendStoreRequestPaginated (Shared.Model.paginatedStrategy shared) requests.posts
+            )
 
 
 
@@ -126,8 +92,12 @@ subscriptions _ =
 -- VIEW
 
 
-view : Route { tagId : String } -> Model -> View Msg
-view route model =
+type alias Data a =
+    Loadable DetailedError a
+
+
+view : Requests -> Shared.Model -> Route { tagId : String } -> Model -> View Msg
+view requests shared route model =
     { title = "Posts tagged with \"" ++ route.params.tagId ++ "\""
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
@@ -144,7 +114,7 @@ view route model =
                         [ Html.text "Browse all posts in this category." ]
                     ]
                 ]
-            , viewPostsSection model.posts
+            , viewPostsSection (Store.get requests.posts (Shared.Model.store shared))
             ]
         ]
     }

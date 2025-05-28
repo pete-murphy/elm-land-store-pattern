@@ -3,26 +3,34 @@ module Pages.Tags exposing (Model, Msg, page)
 import Api.Tag exposing (Tag)
 import Api.TagId as TagId
 import Auth
-import Auth.Credentials exposing (Credentials)
 import Effect exposing (Effect)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Http.DetailedError as DetailedError exposing (DetailedError)
+import Http.Extra exposing (Request)
 import Layouts
 import Loadable exposing (Loadable)
 import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path
 import Shared
+import Shared.Model
+import Store
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
 page user shared _ =
+    let
+        requests : Requests
+        requests =
+            { tags = Api.Tag.get user.credentials
+            }
+    in
     Page.new
-        { init = init user shared
+        { init = init requests shared
         , update = update
-        , view = view
+        , view = view requests shared
         , subscriptions = subscriptions
         }
         |> Page.withLayout (toLayout user)
@@ -41,19 +49,19 @@ type alias Data a =
     Loadable DetailedError a
 
 
-type alias Model =
-    { tags : Data (List Tag)
-    , credentials : Credentials
+type alias Requests =
+    { tags : Request (List Tag)
     }
 
 
-init : Auth.User -> Shared.Model -> () -> ( Model, Effect Msg )
-init user _ _ =
-    ( { tags = Loadable.loading
-      , credentials = user.credentials
-      }
-    , Effect.request (Api.Tag.get user.credentials)
-        BackendRespondedToGetTags
+type alias Model =
+    {}
+
+
+init : Requests -> Shared.Model -> () -> ( Model, Effect Msg )
+init requests shared _ =
+    ( {}
+    , Effect.sendStoreRequest (Shared.Model.strategy shared) requests.tags
     )
 
 
@@ -61,19 +69,15 @@ init user _ _ =
 -- UPDATE
 
 
-type alias ApiResult a =
-    Result DetailedError a
-
-
 type Msg
-    = BackendRespondedToGetTags (ApiResult (List Tag))
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        BackendRespondedToGetTags result ->
-            ( { model | tags = Loadable.fromResult result }
+        NoOp ->
+            ( {}
             , Effect.none
             )
 
@@ -91,14 +95,14 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view model =
+view : Requests -> Shared.Model -> Model -> View Msg
+view requests shared model =
     { title = "Tags"
     , body =
         [ Html.div [ Attributes.class "flex flex-col gap-6" ]
             [ Html.p [ Attributes.class "text-gray-600" ]
                 [ Html.text "Discover posts by topic. Click on any tag to see related posts." ]
-            , viewTagsSection model.tags
+            , viewTagsSection (Store.get requests.tags (Shared.Model.store shared))
             ]
         ]
     }

@@ -204,14 +204,14 @@ viewStore store =
                                     Html.span [ Attributes.class "grid grid-flow-col gap-1 items-center text-red-600" ]
                                         ((Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.xMark |> orLoading)
                                             -- , Html.span [ Attributes.class "line-clamp-1" ] [ Html.text (DetailedError.toString failure) ]
-                                            :: expandButton "failure" (DetailedError.toString failure)
+                                            :: expandButton ("failure_" ++ k) (DetailedError.toString failure)
                                         )
 
                                 Loadable.Success success ->
                                     Html.span [ Attributes.class "grid grid-flow-col gap-1 items-center text-green-600" ]
                                         ((Icon.view Icon.Micro [ Svg.Attributes.class "" ] Path.check |> orLoading)
                                             --  Html.span [ Attributes.class "line-clamp-1" ] [ Html.text (Json.Encode.encode 0 success) ]
-                                            :: expandButton "success" (Json.Encode.encode 2 success)
+                                            :: expandButton ("success_" ++ k) (Json.Encode.encode 2 success)
                                         )
                             ]
                         ]
